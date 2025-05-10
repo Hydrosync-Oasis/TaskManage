@@ -388,3 +388,4 @@ pnpm-debug.log*
 *.sw?
 
 
+Backend/TaskManage/TaskManage/appsettings.json
