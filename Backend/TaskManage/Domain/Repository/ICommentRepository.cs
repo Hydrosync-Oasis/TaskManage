@@ -7,7 +7,7 @@ using Domain.Entities;
 
 namespace Domain.Repository {
     public interface ICommentRepository {
-        public Task<Comment> GetByCommentIdAsync(int id);
+        public Task<Comment?> GetByCommentIdAsync(int id);
         public Task<List<Comment>> GetByTaskIdAsync(int id);
         public Task<List<Comment>> GetByUserIdAsync(int id);
 
