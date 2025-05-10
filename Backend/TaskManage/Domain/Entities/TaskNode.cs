@@ -2,8 +2,10 @@
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 using Pomelo.EntityFrameworkCore.MySql.Storage.Internal;
 
-namespace Entities {
-    public class TaskNode {
+namespace Domain.Entities
+{
+    public class TaskNode
+    {
         public required string TaskTitle { get; set; }
 
         public string? TaskDescription { get; set; }
@@ -24,14 +26,17 @@ namespace Entities {
         public User? AssignedUser { get; set; }
     }
 
-    public enum TaskStatus {
+    public enum TaskStatus
+    {
         Ready,
         Doing,
         Done
     }
 
-    public class TaskNodeConfiguration : IEntityTypeConfiguration<TaskNode> {
-        public void Configure(EntityTypeBuilder<TaskNode> builder) {
+    public class TaskNodeConfiguration : IEntityTypeConfiguration<TaskNode>
+    {
+        public void Configure(EntityTypeBuilder<TaskNode> builder)
+        {
             builder.ToTable("T_TaskNode");
             builder.HasKey(x => x.Id);
             builder.HasOne(x => x.AssignedUser).WithMany(y => y.Tasks);

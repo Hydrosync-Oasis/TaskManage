@@ -5,7 +5,7 @@ import 'element-plus/dist/index.css'
 import { ElRadioButton, ElRadioGroup } from 'element-plus'
 import DAGCanvas from './components/DAGCanvas.vue'
 import AIChat from './components/AIChat.vue'
-import TaskPanel from './components/TaskPanel.vue'
+//import TaskPanel from './components/TaskPanel.vue'
 
 const app = createApp(App)
 
@@ -17,6 +17,6 @@ app.component('ElRadioGroup', ElRadioGroup)
 // 注册自定义组件
 app.component('DAGCanvas', DAGCanvas)
 app.component('AIChat', AIChat)
-app.component('TaskPanel', TaskPanel)
+//app.component('TaskPanel', TaskPanel)
 
 app.mount('#app')

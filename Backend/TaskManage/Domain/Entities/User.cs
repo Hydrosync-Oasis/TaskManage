@@ -6,8 +6,10 @@ using System.Text;
 using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
-namespace Entities {
-    public class User {
+namespace Domain.Entities
+{
+    public class User
+    {
         public int Id { get; set; }
 
         public required string UserName { get; set; }
@@ -28,8 +30,10 @@ namespace Entities {
         public List<AuditLogs> AuditLogs { get; set; } = [];
     }
 
-    public class UserConfiguration :　IEntityTypeConfiguration<User> {
-        public void Configure(EntityTypeBuilder<User> builder) {
+    public class UserConfiguration : IEntityTypeConfiguration<User>
+    {
+        public void Configure(EntityTypeBuilder<User> builder)
+        {
             builder.ToTable("T_User");
             builder.HasKey(x => x.Id);
 

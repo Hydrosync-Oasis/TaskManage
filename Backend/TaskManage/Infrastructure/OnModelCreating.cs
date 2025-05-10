@@ -3,9 +3,11 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using Domain.Entities;
 using Microsoft.EntityFrameworkCore;
 
-namespace Entities {
+namespace Entities
+{
     public class TaskManageDbContext(DbContextOptions<TaskManageDbContext> options) : DbContext(options) {
         public DbSet<AuditLogs> AuditLogs { get; set; }
         public DbSet<Project> Projects { get; set; }

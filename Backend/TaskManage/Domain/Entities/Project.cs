@@ -6,8 +6,10 @@ using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
-namespace Entities {
-    public class Project {
+namespace Domain.Entities
+{
+    public class Project
+    {
         public int Id { get; set; }
         public required string Name { get; set; }
         public string? Description { get; set; }
@@ -19,8 +21,10 @@ namespace Entities {
         public List<TaskNode> Tasks { get; set; } = [];
     }
 
-    public class ProjectConfiguration : IEntityTypeConfiguration<Project> {
-        public void Configure(EntityTypeBuilder<Project> builder) {
+    public class ProjectConfiguration : IEntityTypeConfiguration<Project>
+    {
+        public void Configure(EntityTypeBuilder<Project> builder)
+        {
             builder.ToTable("T_Project");
             builder.HasKey(t => t.Id);
             builder.HasOne(x => x.Owner).WithMany(y => y.Projects);

@@ -6,8 +6,10 @@ using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
-namespace Entities {
-    public class AuditLogs {
+namespace Domain.Entities
+{
+    public class AuditLogs
+    {
         public int Id { get; set; }
 
         public required User Owner { get; set; }
@@ -17,8 +19,10 @@ namespace Entities {
         public DateTimeOffset CreatedAt { get; set; } = DateTimeOffset.Now;
     }
 
-    public class AuditLogConfiguration : IEntityTypeConfiguration<AuditLogs> {
-        public void Configure(EntityTypeBuilder<AuditLogs> builder) {
+    public class AuditLogConfiguration : IEntityTypeConfiguration<AuditLogs>
+    {
+        public void Configure(EntityTypeBuilder<AuditLogs> builder)
+        {
             builder.ToTable("T_Logs");
             builder.HasKey(e => e.Id);
             builder.HasOne(x => x.Owner).WithMany(y => y.AuditLogs);
