@@ -6,8 +6,10 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Entities {
-    public class Comment {
+namespace Domain.Entities
+{
+    public class Comment
+    {
         public TaskNode Task { get; set; }
 
         public int Id { get; set; }
@@ -17,10 +19,13 @@ namespace Entities {
         public DateTimeOffset CreatedTime { get; set; }
 
         public required User Owner { get; set; }
+        public bool IsHidden { get; set; }
     }
 
-    public class CommentConfiguration : IEntityTypeConfiguration<Comment> {
-        public void Configure(EntityTypeBuilder<Comment> builder) {
+    public class CommentConfiguration : IEntityTypeConfiguration<Comment>
+    {
+        public void Configure(EntityTypeBuilder<Comment> builder)
+        {
             builder.ToTable("T_Comment");
             builder.HasOne(x => x.Owner).WithMany(y => y.Comments);
             builder.HasOne(x => x.Task).WithMany(y => y.Comments);
