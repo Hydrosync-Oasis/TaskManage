@@ -384,7 +384,8 @@ pnpm-debug.log*
 *.suo
 *.ntvs*
 *.njsproj
-*.sln
+# *.sln
 *.sw?
 
 
+Backend/TaskManage/TaskManage/appsettings.json
