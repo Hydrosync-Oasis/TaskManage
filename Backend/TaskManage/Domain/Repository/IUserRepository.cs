@@ -1,14 +1,9 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using Domain.Entities;
+﻿using Domain.Entities;
 
 namespace Domain.Repository {
     public interface IUserRepository {
-        public Task<User> GetUserByIdAsync(int id);
-        public Task<User> GetUserByUsernameAsync(int id);
+        public Task<User?> GetUserByIdAsync(int id);
+        public Task<List<User>> GetUserByUsernameAsync(string uname);
 
         public Task AddUserAsync(User user);
         public Task UpdateUserAsync(User user);
@@ -19,6 +14,6 @@ namespace Domain.Repository {
         /// </summary>
         /// <param name="user">用户实例</param>
         /// <returns>任务数</returns>
-        public Task<int> GetPendingTaskCountAsync(User user);
+        public Task<int> GetPendingTaskCountAsync(User user, DateTimeOffset time);
     }
 }
