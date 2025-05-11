@@ -3,7 +3,9 @@
 namespace Domain.Repository {
     public interface IUserRepository {
         public Task<User?> GetUserByIdAsync(int id);
-        public Task<List<User>> GetUserByUsernameAsync(string uname);
+        public Task<List<User>> GetUserByStartUsernameAsync(string uname);
+        public Task<User> GetUserByUsernameAsync(string uname);
+
 
         public Task AddUserAsync(User user);
         public Task UpdateUserAsync(User user);

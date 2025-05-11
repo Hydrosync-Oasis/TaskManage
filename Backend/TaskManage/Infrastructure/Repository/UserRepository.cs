@@ -14,7 +14,7 @@ namespace Infrastructure.Repository {
             return dbContext.Users.FirstOrDefaultAsync(x=> x.Id == id);
         }
 
-        public async Task<List<User>> GetUserByUsernameAsync(string uname) {
+        public async Task<List<User>> GetUserByStartUsernameAsync(string uname) {
             return await dbContext.Users.Where(x => x.UserName.StartsWith(uname)).ToListAsync();
         }
 
@@ -36,6 +36,11 @@ namespace Infrastructure.Repository {
 
         public Task<int> GetPendingTaskCountAsync(User user, DateTimeOffset time) {
 
+        }
+
+        public Task<User> GetUserByUsernameAsync(string uname)
+        {
+            throw new NotImplementedException();
         }
     }
 }

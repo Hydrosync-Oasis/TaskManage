@@ -11,9 +11,9 @@ namespace Domain.Entities
 
         public required string PasswordHash { get; set; }
 
-        public string? Avatar { get; set; }
+        public string? AvatarUrl { get; set; }
 
-        public DateTimeOffset CreatedTime { get; set; }
+        public DateTimeOffset CreatedAt { get; set; }
 
         public bool IsActive { get; set; }
 
