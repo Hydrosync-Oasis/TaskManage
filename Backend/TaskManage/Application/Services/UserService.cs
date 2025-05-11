@@ -3,16 +3,18 @@ using Application.Interfaces;
 using BCrypt.Net;
 using Domain.Entities;
 using Domain.Repository;
-
+using Infrastructure.Auth; // 引入 JwtTokenGenerator 所在命名空间
 namespace Application.Services
 {
     public class UserService : IUserService
     {
         private readonly IUserRepository _userRepository;
+        private readonly JwtTokenGenerator _jwtTokenGenerator;
 
-        public UserService(IUserRepository userRepository)
+        public UserService(IUserRepository userRepository, JwtTokenGenerator jwtTokenGenerator)
         {
             _userRepository = userRepository;
+            _jwtTokenGenerator = jwtTokenGenerator;
         }
 
         public async Task Register(string username, string password)
@@ -47,7 +49,7 @@ namespace Application.Services
                 throw new UnauthorizedAccessException("用户名或密码错误");
 
             // 自定义生成JWT
-            string token = GenerateJwtToken(user);
+            string token = _jwtTokenGenerator.GenerateToken(user.Id.ToString(), user.UserName);
 
             return new LoginResultDto
             {
