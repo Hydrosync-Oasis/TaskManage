@@ -19,6 +19,9 @@ namespace TaskManage {
             builder.Services.AddDbContext<TaskManageDbContext>(options =>
                 options.UseMySql(ServerVersion.AutoDetect(builder.Configuration.GetConnectionString("DefaultConnection"))));
 
+            //生成JWT的类      
+            builder.Services.AddSingleton<JwtTokenGenerator>();
+
             // JWT 身份验证服务注册
             builder.Services.AddAuthentication("Bearer")
                 .AddJwtBearer("Bearer", options =>
