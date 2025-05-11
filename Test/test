@@ -1,0 +1,56 @@
+// UserServiceTests.cs
+public class UserServiceTests : IDisposable
+{
+    private readonly Mock<IUserRepository> _mockRepo = new();
+    private readonly UserService _userService;
+
+    public UserServiceTests()
+    {
+        _userService = new UserService(_mockRepo.Object);
+    }
+
+    [Fact]
+    public void Login_ValidCredentials_ReturnsUser()
+    {
+        // 模拟数据
+        var user = new User { Username = "admin", PasswordHash = BCrypt.Net.BCrypt.HashPassword("123456") };
+        _mockRepo.Setup(x => x.GetUserByUsername("admin")).Returns(user);
+
+        // 执行登录
+        var result = _userService.Login("admin", "123456");
+        
+        Assert.NotNull(result);
+        Assert.Equal("admin", result.Username);
+    }
+
+    [Fact]
+    public void Login_InvalidPassword_ThrowsException()
+    {
+        _mockRepo.Setup(x => x.GetUserByUsername("admin"))
+            .Returns(new User { PasswordHash = "hashed_password" });
+
+        Assert.Throws<AuthenticationException>(() => 
+            _userService.Login("admin", "wrong_password"));
+    }
+
+    public void Dispose() => _mockRepo.Reset();
+}
+}
+// PermissionServiceTests.cs
+public class PermissionServiceTests
+{
+    [Fact]
+    public void CheckPermission_AdminRole_ReturnsTrue()
+    {
+        var user = new User { 
+            Role = new Role { 
+                Permissions = new List<string> { "task:delete" } 
+            } 
+        };
+        
+        var service = new PermissionService();
+        var result = service.CheckPermission(user, "task:delete");
+        
+        Assert.True(result);
+    }
+}
