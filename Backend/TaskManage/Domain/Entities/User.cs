@@ -1,9 +1,4 @@
 ﻿using Microsoft.EntityFrameworkCore;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
 namespace Domain.Entities
@@ -16,9 +11,9 @@ namespace Domain.Entities
 
         public required string PasswordHash { get; set; }
 
-        public string? Avatar { get; set; }
+        public string? AvatarUrl { get; set; }
 
-        public DateTimeOffset CreatedTime { get; set; }
+        public DateTimeOffset CreatedAt { get; set; }
 
         public bool IsActive { get; set; }
 
