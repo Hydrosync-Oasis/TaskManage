@@ -20,8 +20,8 @@ namespace Application.Services
         public async Task Register(string username, string password)
         {
             // 检查用户名是否存在
-            var res = await _userRepository.GetUserByStartUsernameAsync(username);
-            var exists = res is not null && res.Count > 0;
+            var res = await _userRepository.GetUserByUsernameAsync(username);
+            var exists = res is not null;
             if (exists)
                 throw new InvalidOperationException("用户名已存在");
 
@@ -38,7 +38,7 @@ namespace Application.Services
             await _userRepository.AddUserAsync(user);
         }
 
-        public async LoginResultDto Login(string username, string password)
+        public async Task<LoginResultDto> Login(string username, string password)
         {
             var user = await _userRepository.GetUserByUsernameAsync(username);
             if (user == null)

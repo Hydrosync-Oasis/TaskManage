@@ -17,12 +17,20 @@ namespace Domain.Entities
 
         public bool IsActive { get; set; }
 
+        public UserRole UserRole { get; set; }
+
         public List<TaskNode> Tasks { get; set; } = [];
         public List<Comment> Comments { get; set; } = [];
 
         public List<Project> Projects { get; set; } = [];
 
         public List<AuditLogs> AuditLogs { get; set; } = [];
+    }
+
+    public enum UserRole {
+        Admin,
+        ProjectAdmin,
+        ProjectUser
     }
 
     public class UserConfiguration : IEntityTypeConfiguration<User>

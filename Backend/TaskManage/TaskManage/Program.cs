@@ -2,6 +2,9 @@ using Entities;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
+using Infrastructure.Auth;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+
 
 namespace TaskManage {
     public class Program {
@@ -49,6 +52,7 @@ namespace TaskManage {
 
             app.UseHttpsRedirection();
 
+            app.UseAuthentication();
             app.UseAuthorization();
 
 

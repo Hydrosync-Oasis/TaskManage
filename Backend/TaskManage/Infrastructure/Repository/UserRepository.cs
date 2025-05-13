@@ -18,6 +18,10 @@ namespace Infrastructure.Repository {
             return await dbContext.Users.Where(x => x.UserName.StartsWith(uname)).ToListAsync();
         }
 
+        public async Task<UserRole?> GetUserRoleByIdAsync(int id) {
+            return (await dbContext.Users.FirstOrDefaultAsync(x => x.Id == id))?.UserRole;
+        }
+
         public async Task AddUserAsync(User user) {
             dbContext.Users.Add(user);
             await dbContext.SaveChangesAsync();
@@ -34,13 +38,8 @@ namespace Infrastructure.Repository {
             await dbContext.SaveChangesAsync();
         }
 
-        public Task<int> GetPendingTaskCountAsync(User user, DateTimeOffset time) {
-
-        }
-
-        public Task<User> GetUserByUsernameAsync(string uname)
-        {
-            throw new NotImplementedException();
+        public Task<User?> GetUserByUsernameAsync(string uname) {
+            return dbContext.Users.FirstOrDefaultAsync(x => x.UserName == uname);
         }
     }
 }
