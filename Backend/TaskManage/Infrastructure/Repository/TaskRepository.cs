@@ -1,6 +1,5 @@
 ﻿using Domain.Entities;
 using Domain.Repository;
-using Entities;
 using Microsoft.EntityFrameworkCore;
 using TaskStatus = Domain.Entities.TaskStatus;
 

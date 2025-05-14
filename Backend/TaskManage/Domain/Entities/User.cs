@@ -1,7 +1,4 @@
-﻿using Microsoft.EntityFrameworkCore;
-using Microsoft.EntityFrameworkCore.Metadata.Builders;
-
-namespace Domain.Entities
+﻿namespace Domain.Entities
 {
     public class User
     {
@@ -21,9 +18,7 @@ namespace Domain.Entities
 
         public List<TaskNode> Tasks { get; set; } = [];
         public List<Comment> Comments { get; set; } = [];
-
         public List<Project> Projects { get; set; } = [];
-
         public List<AuditLogs> AuditLogs { get; set; } = [];
     }
 
@@ -31,15 +26,5 @@ namespace Domain.Entities
         Admin,
         ProjectAdmin,
         ProjectUser
-    }
-
-    public class UserConfiguration : IEntityTypeConfiguration<User>
-    {
-        public void Configure(EntityTypeBuilder<User> builder)
-        {
-            builder.ToTable("T_User");
-            builder.HasKey(x => x.Id);
-
-        }
     }
 }

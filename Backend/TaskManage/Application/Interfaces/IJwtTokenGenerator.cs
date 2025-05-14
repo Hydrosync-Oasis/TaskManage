@@ -6,6 +6,6 @@ using System.Threading.Tasks;
 
 namespace Infrastructure.Auth {
     public interface IJwtTokenGenerator {
-        public string GenerateToken(int userId, string username);
+        public Task<string> GenerateToken(int userId);
     }
 }

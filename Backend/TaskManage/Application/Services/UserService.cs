@@ -3,22 +3,19 @@ using Application.Interfaces;
 using BCrypt.Net;
 using Domain.Entities;
 using Domain.Repository;
-using Infrastructure.Auth; // 引入 JwtTokenGenerator 所在命名空间
-namespace Application.Services
-{
-    public class UserService : IUserService
-    {
-        private readonly IUserRepository _userRepository;
-        private readonly JwtTokenGenerator _jwtTokenGenerator;
+using Infrastructure.Auth;
 
-        public UserService(IUserRepository userRepository, JwtTokenGenerator jwtTokenGenerator)
-        {
+namespace Application.Services {
+    public class UserService : IUserService {
+        private readonly IUserRepository _userRepository;
+        private readonly IJwtTokenGenerator _jwtTokenGenerator;
+
+        public UserService(IUserRepository userRepository, IJwtTokenGenerator jwtTokenGenerator) {
             _userRepository = userRepository;
             _jwtTokenGenerator = jwtTokenGenerator;
         }
 
-        public async Task Register(string username, string password)
-        {
+        public async Task Register(string username, string password) {
             // 检查用户名是否存在
             var res = await _userRepository.GetUserByUsernameAsync(username);
             var exists = res is not null;
@@ -28,8 +25,7 @@ namespace Application.Services
             // 加密密码
             string hashedPassword = BCrypt.Net.BCrypt.HashPassword(password);
 
-            var user = new User
-            {
+            var user = new User {
                 UserName = username,
                 PasswordHash = hashedPassword,
                 CreatedAt = DateTimeOffset.UtcNow
@@ -38,8 +34,7 @@ namespace Application.Services
             await _userRepository.AddUserAsync(user);
         }
 
-        public async Task<LoginResultDto> Login(string username, string password)
-        {
+        public async Task<LoginResultDto> Login(string username, string password) {
             var user = await _userRepository.GetUserByUsernameAsync(username);
             if (user == null)
                 throw new UnauthorizedAccessException("用户名或密码错误");
@@ -49,13 +44,11 @@ namespace Application.Services
                 throw new UnauthorizedAccessException("用户名或密码错误");
 
             // 自定义生成JWT
-            string token = _jwtTokenGenerator.GenerateToken(user.Id.ToString(), user.UserName);
+            string token = await _jwtTokenGenerator.GenerateToken(user.Id);
 
-            return new LoginResultDto
-            {
+            return new LoginResultDto {
                 Token = token,
-                User = new UserDto
-                {
+                User = new UserDto {
                     Id = user.Id,
                     Username = user.UserName,
                     AvatarUrl = user.AvatarUrl
@@ -63,3 +56,4 @@ namespace Application.Services
             };
         }
     }
+}

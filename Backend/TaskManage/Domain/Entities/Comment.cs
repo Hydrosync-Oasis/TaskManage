@@ -1,6 +1,4 @@
-﻿using Microsoft.EntityFrameworkCore;
-using Microsoft.EntityFrameworkCore.Metadata.Builders;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -20,15 +18,5 @@ namespace Domain.Entities
 
         public required User Owner { get; set; }
         public bool IsHidden { get; set; }
-    }
-
-    public class CommentConfiguration : IEntityTypeConfiguration<Comment>
-    {
-        public void Configure(EntityTypeBuilder<Comment> builder)
-        {
-            builder.ToTable("T_Comment");
-            builder.HasOne(x => x.Owner).WithMany(y => y.Comments);
-            builder.HasOne(x => x.Task).WithMany(y => y.Comments);
-        }
     }
 }
