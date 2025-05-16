@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using Domain.Entities;
 
 namespace Application.DTOs
 {
@@ -12,11 +13,17 @@ namespace Application.DTOs
         public string Username { get; set; } = null!;
         public string? Email { get; set; }
         public string? AvatarUrl { get; set; }
+        public required UserRole Role { get; set; }
     }
 
     public class LoginResultDto
     {
         public string Token { get; set; } = null!;
         public UserDto User { get; set; } = null!;
+    }
+
+    public class LoginRegisterDto {
+        public required string Username { get; set; }
+        public required string Password { get; set; }
     }
 }

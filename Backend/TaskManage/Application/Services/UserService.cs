@@ -6,18 +6,11 @@ using Domain.Repository;
 using Infrastructure.Auth;
 
 namespace Application.Services {
-    public class UserService : IUserService {
-        private readonly IUserRepository _userRepository;
-        private readonly IJwtTokenGenerator _jwtTokenGenerator;
-
-        public UserService(IUserRepository userRepository, IJwtTokenGenerator jwtTokenGenerator) {
-            _userRepository = userRepository;
-            _jwtTokenGenerator = jwtTokenGenerator;
-        }
-
+    public class UserService(IUserRepository userRepository, IJwtTokenGenerator jwtTokenGenerator)
+        : IUserService {
         public async Task Register(string username, string password) {
             // 检查用户名是否存在
-            var res = await _userRepository.GetUserByUsernameAsync(username);
+            var res = await userRepository.GetUserByUsernameAsync(username);
             var exists = res is not null;
             if (exists)
                 throw new InvalidOperationException("用户名已存在");
@@ -28,14 +21,15 @@ namespace Application.Services {
             var user = new User {
                 UserName = username,
                 PasswordHash = hashedPassword,
-                CreatedAt = DateTimeOffset.UtcNow
+                CreatedAt = DateTimeOffset.UtcNow,
+                UserRole = UserRole.ProjectUser
             };
 
-            await _userRepository.AddUserAsync(user);
+            await userRepository.AddUserAsync(user);
         }
 
         public async Task<LoginResultDto> Login(string username, string password) {
-            var user = await _userRepository.GetUserByUsernameAsync(username);
+            var user = await userRepository.GetUserByUsernameAsync(username);
             if (user == null)
                 throw new UnauthorizedAccessException("用户名或密码错误");
 
@@ -44,15 +38,26 @@ namespace Application.Services {
                 throw new UnauthorizedAccessException("用户名或密码错误");
 
             // 自定义生成JWT
-            string token = await _jwtTokenGenerator.GenerateToken(user.Id);
+            string token = await jwtTokenGenerator.GenerateToken(user.Id);
 
             return new LoginResultDto {
                 Token = token,
                 User = new UserDto {
                     Id = user.Id,
                     Username = user.UserName,
-                    AvatarUrl = user.AvatarUrl
+                    AvatarUrl = user.AvatarUrl,
+                    Role = user.UserRole
                 }
+            };
+        }
+
+        public async Task<UserDto> GetUserInfo(int id) {
+            var u = await userRepository.GetUserByIdAsync(id);
+            return new UserDto() {
+                Username = u.UserName,
+                Id = id,
+                AvatarUrl = u.AvatarUrl,
+                Role = u.UserRole
             };
         }
     }

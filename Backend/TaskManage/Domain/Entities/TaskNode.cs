@@ -4,9 +4,9 @@ namespace Domain.Entities
 {
     public class TaskNode
     {
-        public required string TaskTitle { get; set; }
+        public required string Title { get; set; }
 
-        public string? TaskDescription { get; set; }
+        public string? Description { get; set; }
 
         public int Id { get; set; }
 
@@ -15,13 +15,15 @@ namespace Domain.Entities
         public TaskStatus? TaskStatus { get; set; }
 
         public List<TaskNode> DependentNodes { get; set; } = [];
-        public List<Comment> Comments { get; set; }
+        public List<Comment> Comments { get; set; } = [];
 
         public int Priority { get; set; }
 
-        public required Project Project { get; set; }
+        public Project Project { get; set; }
+        public required int ProjectId { get; set; }
 
         public User? AssignedUser { get; set; }
+        public int? AssignedUserId { get; set; }
     }
 
     public enum TaskStatus

@@ -11,5 +11,6 @@ namespace Application.Interfaces
     {
         public Task Register(string username, string password);
         public Task<LoginResultDto> Login(string username, string password);
+        public Task<UserDto> GetUserInfo(int id);
     }
 }
