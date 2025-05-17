@@ -1,14 +1,12 @@
-﻿using Microsoft.EntityFrameworkCore;
-using Microsoft.EntityFrameworkCore.Metadata.Builders;
-using Pomelo.EntityFrameworkCore.MySql.Storage.Internal;
+﻿using Pomelo.EntityFrameworkCore.MySql.Storage.Internal;
 
 namespace Domain.Entities
 {
     public class TaskNode
     {
-        public required string TaskTitle { get; set; }
+        public required string Title { get; set; }
 
-        public string? TaskDescription { get; set; }
+        public string? Description { get; set; }
 
         public int Id { get; set; }
 
@@ -17,13 +15,15 @@ namespace Domain.Entities
         public TaskStatus? TaskStatus { get; set; }
 
         public List<TaskNode> DependentNodes { get; set; } = [];
-        public List<Comment> Comments { get; set; }
+        public List<Comment> Comments { get; set; } = [];
 
         public int Priority { get; set; }
 
-        public required Project Project { get; set; }
+        public Project Project { get; set; }
+        public required int ProjectId { get; set; }
 
         public User? AssignedUser { get; set; }
+        public int? AssignedUserId { get; set; }
     }
 
     public enum TaskStatus
@@ -31,18 +31,5 @@ namespace Domain.Entities
         Ready,
         Doing,
         Done
-    }
-
-    public class TaskNodeConfiguration : IEntityTypeConfiguration<TaskNode>
-    {
-        public void Configure(EntityTypeBuilder<TaskNode> builder)
-        {
-            builder.ToTable("T_TaskNode");
-            builder.HasKey(x => x.Id);
-            builder.HasOne(x => x.AssignedUser).WithMany(y => y.Tasks);
-            builder.HasOne(x => x.Project).WithMany(y => y.Tasks);
-            builder.HasMany(x => x.DependentNodes).WithMany();
-
-        }
     }
 }

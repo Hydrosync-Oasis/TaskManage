@@ -1,38 +1,82 @@
 <template>
   <el-container class="app-container">
     <el-header class="app-header">
-      <el-row align="middle" style="width: 100%">
-        <el-col :span="8" style="display: flex; align-items: center; gap: 16px;">
-          <el-select v-model="selectedFile" placeholder="File: Task1" style="width: 180px" size="large">
-            <el-option label="Task1" value="Task1" />
-            <el-option label="Task2" value="Task2" />
-          </el-select>
-        </el-col>
-      </el-row>
+      <div class="header-content">
+        <el-select v-model="selectedFile" placeholder="File: Task1" style="width: 180px" size="large">
+          <el-option label="Task1" value="Task1" />
+          <el-option label="Task2" value="Task2" />
+        </el-select>
+        <div class="center-title">
+          <el-icon class="logo-icon"><Monitor /></el-icon>
+          <h1 class="system-title">智能项目管理系统</h1>
+        </div>
+      </div>
     </el-header>
     <el-main class="app-main">
       <el-row :gutter="24" style="height: 100%">
         <el-col :span="5" class="left-panel">
           <el-collapse accordion>
             <el-collapse-item title="展示任务评论" name="0">
+              <template #title>
+                <div class="collapse-title">
+                  <el-icon><ChatDotRound /></el-icon>
+                  <span>展示任务评论</span>
+                </div>
+              </template>
               <TaskComment />
             </el-collapse-item>
             <el-collapse-item title="制定日期，截止日期" name="1">
+              <template #title>
+                <div class="collapse-title">
+                  <el-icon><Calendar /></el-icon>
+                  <span>制定日期，截止日期</span>
+                </div>
+              </template>
               <TaskDate />
             </el-collapse-item>
             <el-collapse-item title="优先级" name="2">
+              <template #title>
+                <div class="collapse-title">
+                  <el-icon><Star /></el-icon>
+                  <span>优先级</span>
+                </div>
+              </template>
               <TaskPriority />
             </el-collapse-item>
             <el-collapse-item title="分配人员" name="3">
+              <template #title>
+                <div class="collapse-title">
+                  <el-icon><User /></el-icon>
+                  <span>分配人员</span>
+                </div>
+              </template>
               <TaskAssignee />
             </el-collapse-item>
             <el-collapse-item title="任务编号" name="4">
+              <template #title>
+                <div class="collapse-title">
+                  <el-icon><Document /></el-icon>
+                  <span>任务编号</span>
+                </div>
+              </template>
               <TaskId />
             </el-collapse-item>
             <el-collapse-item title="前驱节点" name="5">
+              <template #title>
+                <div class="collapse-title">
+                  <el-icon><Connection /></el-icon>
+                  <span>前驱节点</span>
+                </div>
+              </template>
               <TaskPredecessor />
             </el-collapse-item>
             <el-collapse-item title="任务状态" name="6">
+              <template #title>
+                <div class="collapse-title">
+                  <el-icon><Loading /></el-icon>
+                  <span>任务状态</span>
+                </div>
+              </template>
               <TaskStatus />
             </el-collapse-item>
           </el-collapse>
@@ -52,6 +96,7 @@
 
 <script>
 import { ref } from 'vue'
+import { Monitor, ChatDotRound, Calendar, Star, User, Document, Connection, Loading } from '@element-plus/icons-vue'
 import DAGCanvas from './DAGCanvas.vue'
 import AIChat from './AIChat.vue'
 import TaskComment from './TaskComment.vue'
@@ -73,113 +118,179 @@ export default {
     TaskAssignee,
     TaskId,
     TaskPredecessor,
-    TaskStatus
+    TaskStatus,
+    Monitor,
+    ChatDotRound,
+    Calendar,
+    Star,
+    User,
+    Document,
+    Connection,
+    Loading
   },
   setup() {
     const selectedFile = ref('Task1')
-    const taskBtns = [
-      '展示任务评论',
-      '制定日期，截止日期',
-      '优先级',
-      '分配人员',
-      '任务编号',
-      '前驱节点',
-      '任务状态'
-    ]
     return {
-      selectedFile,
-      taskBtns
+      selectedFile
     }
   }
 }
 </script>
 
 <style>
-body, html {
-  background: #f5f7fa;
+:root {
+  --primary-gradient: linear-gradient(135deg, #43cea2 0%, #185a9d 100%);
+  --accent-color: #ff9800;
+  --text-primary: #2c3e50;
+  --text-secondary: #546e7a;
+  --bg-light: #eceff4;
+  --border-color: #e0e6ed;
 }
-::-webkit-scrollbar { display: none; }
-html, body { margin: 0; padding: 0; height: 100vh; overflow: hidden; }
-#app { height: 100vh; font-family: Avenir, Helvetica, Arial, sans-serif; background: #f5f7fa; color: #333; }
-.app-container { height: 100vh; }
+
+body, html {
+  background: var(--bg-light);
+  margin: 0;
+  padding: 0;
+  height: 100vh;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+}
+
+.app-container {
+  height: 100vh;
+}
+
 .app-header {
-  background: #fff;
-  border-bottom: 1px solid #e4e7ed;
+  background: var(--primary-gradient);
+  padding: 0 32px;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.1);
+}
+
+.header-content {
+  height: 64px;
   display: flex;
   align-items: center;
-  height: 64px;
-  padding: 0 32px;
-  box-shadow: 0 2px 8px 0 rgba(0,0,0,0.03);
-  border-radius: 0 0 12px 12px;
+  justify-content: space-between;
+  position: relative;
 }
-.app-main {
-  padding: 24px 32px 32px 32px;
-  height: calc(100vh - 64px);
-  background: #f5f7fa;
-  overflow: hidden;
-}
-.left-panel {
-  background: #fff;
-  border-radius: 16px;
-  box-shadow: 0 2px 12px 0 rgba(0,0,0,0.06);
-  height: 100%;
-  padding: 32px 0 32px 0;
+
+.center-title {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
   display: flex;
-  align-items: flex-start;
-  justify-content: center;
+  align-items: center;
+  gap: 12px;
 }
+
+.logo-icon {
+  font-size: 24px;
+  color: white;
+}
+
+.system-title {
+  color: white;
+  font-size: 2.2rem;
+  font-weight: 700;
+  margin: 0;
+  max-width: 60vw;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.app-main {
+  padding: 24px;
+  height: calc(100vh - 64px);
+  background: var(--bg-light);
+}
+
+.left-panel {
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.05);
+  padding: 16px;
+}
+
+.collapse-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--text-primary);
+}
+
+.collapse-title .el-icon {
+  color: var(--accent-color);
+}
+
 .center-panel {
   display: flex;
   align-items: center;
   justify-content: center;
-  height: 100%;
 }
-.right-panel {
-  height: 100%;
-  display: flex;
-  align-items: flex-start;
-  justify-content: center;
-  padding: 0;
-}
-.task-btn-group {
-  display: flex;
-  flex-direction: column;
-  gap: 20px;
-  width: 90%;
-}
-.task-btn {
-  width: 100%;
-  margin: 0 auto;
-  text-align: left;
-  border-radius: 24px !important;
-  font-size: 16px;
-  font-weight: 500;
-  background: #f5f7fa;
-  color: #409eff;
-  border: 1px solid #d9ecff;
-  transition: box-shadow 0.2s, background 0.2s;
-}
-.task-btn:hover {
-  background: #e8f4ff;
-  box-shadow: 0 2px 8px 0 rgba(64,158,255,0.08);
-}
+
 .dag-placeholder {
   width: 100%;
-  height: 500px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border-radius: 16px;
-  box-shadow: 0 2px 12px 0 rgba(0,0,0,0.06);
-  border: 1px solid #e4e7ed;
-  background: #fff;
+  height: 100%;
+  min-height: 600px;
+  border-radius: 12px;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.05);
+  background: white;
+  border: 1px solid var(--border-color);
 }
-.light-card {
-  background: #fff !important;
-  border-radius: 16px;
-  box-shadow: 0 2px 12px 0 rgba(0,0,0,0.06);
-  border: 1px solid #e4e7ed;
+
+.right-panel {
+  height: 100%;
+  border-radius: 12px;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.05);
+  background: white;
+  border: 1px solid var(--border-color);
 }
-.el-radio-button { margin-right: 10px }
-.el-col { height: 100% }
+
+/* 响应式设计 */
+@media (max-width: 1200px) {
+  .el-col {
+    width: 100%;
+  }
+  
+  .left-panel, .center-panel, .right-panel {
+    margin-bottom: 24px;
+  }
+}
+
+/* Element Plus 组件样式覆盖 */
+.el-collapse-item__header {
+  transition: background 0.3s, color 0.3s, box-shadow 0.3s;
+  border-radius: 8px;
+  font-weight: 500;
+  color: var(--text-primary);
+}
+
+.el-collapse-item__header:hover {
+  background: #e3f2fd;
+  color: #1976d2;
+  box-shadow: 0 2px 8px 0 rgba(100,181,246,0.08);
+  transform: translateY(-2px) scale(1.03);
+}
+
+.el-collapse-item__content {
+  color: var(--text-secondary);
+}
+
+.el-button--primary {
+  background: var(--primary-gradient);
+  border: none;
+}
+
+.el-button--primary:hover {
+  background: linear-gradient(135deg, #1976d2 0%, #0d47a1 100%);
+}
+
+.el-select .el-input__wrapper {
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
+}
+
+.el-select .el-input__wrapper:hover {
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
 </style>

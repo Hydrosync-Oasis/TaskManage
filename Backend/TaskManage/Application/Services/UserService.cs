@@ -3,44 +3,33 @@ using Application.Interfaces;
 using BCrypt.Net;
 using Domain.Entities;
 using Domain.Repository;
-using Infrastructure.Auth; // 引入 JwtTokenGenerator 所在命名空间
-namespace Application.Services
-{
-    public class UserService : IUserService
-    {
-        private readonly IUserRepository _userRepository;
-        private readonly JwtTokenGenerator _jwtTokenGenerator;
+using Infrastructure.Auth;
 
-        public UserService(IUserRepository userRepository, JwtTokenGenerator jwtTokenGenerator)
-        {
-            _userRepository = userRepository;
-            _jwtTokenGenerator = jwtTokenGenerator;
-        }
-
-        public async Task Register(string username, string password)
-        {
+namespace Application.Services {
+    public class UserService(IUserRepository userRepository, IJwtTokenGenerator jwtTokenGenerator)
+        : IUserService {
+        public async Task Register(string username, string password) {
             // 检查用户名是否存在
-            var res = await _userRepository.GetUserByStartUsernameAsync(username);
-            var exists = res is not null && res.Count > 0;
+            var res = await userRepository.GetUserByUsernameAsync(username);
+            var exists = res is not null;
             if (exists)
                 throw new InvalidOperationException("用户名已存在");
 
             // 加密密码
             string hashedPassword = BCrypt.Net.BCrypt.HashPassword(password);
 
-            var user = new User
-            {
+            var user = new User {
                 UserName = username,
                 PasswordHash = hashedPassword,
-                CreatedAt = DateTimeOffset.UtcNow
+                CreatedAt = DateTimeOffset.UtcNow,
+                UserRole = UserRole.ProjectUser
             };
 
-            await _userRepository.AddUserAsync(user);
+            await userRepository.AddUserAsync(user);
         }
 
-        public async LoginResultDto Login(string username, string password)
-        {
-            var user = await _userRepository.GetUserByUsernameAsync(username);
+        public async Task<LoginResultDto> Login(string username, string password) {
+            var user = await userRepository.GetUserByUsernameAsync(username);
             if (user == null)
                 throw new UnauthorizedAccessException("用户名或密码错误");
 
@@ -49,17 +38,27 @@ namespace Application.Services
                 throw new UnauthorizedAccessException("用户名或密码错误");
 
             // 自定义生成JWT
-            string token = _jwtTokenGenerator.GenerateToken(user.Id.ToString(), user.UserName);
+            string token = await jwtTokenGenerator.GenerateToken(user.Id);
 
-            return new LoginResultDto
-            {
+            return new LoginResultDto {
                 Token = token,
-                User = new UserDto
-                {
+                User = new UserDto {
                     Id = user.Id,
                     Username = user.UserName,
-                    AvatarUrl = user.AvatarUrl
+                    AvatarUrl = user.AvatarUrl,
+                    Role = user.UserRole
                 }
             };
         }
+
+        public async Task<UserDto> GetUserInfo(int id) {
+            var u = await userRepository.GetUserByIdAsync(id);
+            return new UserDto() {
+                Username = u.UserName,
+                Id = id,
+                AvatarUrl = u.AvatarUrl,
+                Role = u.UserRole
+            };
+        }
     }
+}
