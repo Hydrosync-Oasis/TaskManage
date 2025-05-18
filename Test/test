@@ -77,3 +77,38 @@ public class TaskGraphTests : TestContext
         Assert.Contains("需求分析", cut.Markup);
     }
 }
+// CommentComponentTests.cs
+public class CommentComponentTests : TestContext
+{
+    [Fact]
+    public void Submit_EmptyComment_ShowsError()
+    {
+        var cut = RenderComponent<CommentForm>();
+        cut.Find("button").Click();
+        
+        Assert.Contains("评论内容不能为空", cut.Markup);
+    }
+}
+// TaskGraphTests.cs
+public class TaskGraphTests : TestContext
+{
+    [Fact]
+    public void Render_Tasks_ShowNodes()
+    {
+        // 准备测试数据
+        var tasks = new List<TaskItem>
+        {
+            new TaskItem { Id = 1, Name = "需求分析" },
+            new TaskItem { Id = 2, Name = "UI设计" }
+        };
+
+        // 渲染组件
+        var cut = RenderComponent<TaskGraph>(parameters => 
+            parameters.Add(p => p.Tasks, tasks));
+
+        // 验证渲染结果
+        var nodes = cut.FindAll(".task-node");
+        Assert.Equal(2, nodes.Count);
+        Assert.Contains("需求分析", cut.Markup);
+    }
+}
