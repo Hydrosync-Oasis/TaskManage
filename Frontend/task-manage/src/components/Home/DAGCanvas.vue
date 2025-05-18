@@ -50,12 +50,16 @@ export default {
           source: '1',
           target: '2',
           animated: true,
+          type: 'straight',
+          markerEnd: 'arrowclosed'
         },
         {
           id: 'e2-3',
           source: '2',
           target: '3',
           animated: true,
+          type: 'straight',
+          markerEnd: 'arrowclosed'
         },
       ],
     }

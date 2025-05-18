@@ -1,7 +1,11 @@
-using Entities;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
+using Application.DTOMappings;
+using Infrastructure;
+using Infrastructure.DependencyInjection;
+using Mapster;
+
 
 namespace TaskManage {
     public class Program {
@@ -16,11 +20,19 @@ namespace TaskManage {
             builder.Services.AddSwaggerGen();
 
             // 数据库配置
+            var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
             builder.Services.AddDbContext<TaskManageDbContext>(options =>
-                options.UseMySql(ServerVersion.AutoDetect(builder.Configuration.GetConnectionString("DefaultConnection"))));
+                options.UseSqlServer(
+                    connectionString!));
 
-            //生成JWT的类      
-            builder.Services.AddSingleton<JwtTokenGenerator>();
+
+            TaskMapping.Register(TypeAdapterConfig.GlobalSettings);
+            ProjectMapping.Register(TypeAdapterConfig.GlobalSettings);
+
+            // 自己封装的依赖注入方法
+            builder.Services.AddInfrastructureServices()
+                .AddApplicationServices()
+                .AddRepositoryServices();
 
             // JWT 身份验证服务注册
             builder.Services.AddAuthentication("Bearer")
@@ -49,6 +61,7 @@ namespace TaskManage {
 
             app.UseHttpsRedirection();
 
+            app.UseAuthentication();
             app.UseAuthorization();
 
 
