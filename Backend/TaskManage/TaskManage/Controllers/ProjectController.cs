@@ -1,12 +1,15 @@
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Authorization;
 using Application.Interfaces;
 using Application.DTOs;
 using Domain.Entities;
+using Mapster;
 
 namespace TaskManage.Controllers
 {
     [ApiController]
     [Route("api/[controller]")]
+    [Authorize] // 登录用户才能访问所有接口
     public class ProjectController : ControllerBase
     {
         private readonly IProjectService _projectService;
@@ -62,6 +65,7 @@ namespace TaskManage.Controllers
         }
 
         [HttpPut("{id}")]
+        [Authorize(Roles = "Admin")]
         public async Task<IActionResult> UpdateProject(int id, [FromBody] ProjectDto dto)
         {
             try
@@ -79,6 +83,7 @@ namespace TaskManage.Controllers
         }
 
         [HttpDelete("{id}")]
+        [Authorize(Roles = "Admin")]
         public async Task<IActionResult> DeleteProject(int id)
         {
             try
