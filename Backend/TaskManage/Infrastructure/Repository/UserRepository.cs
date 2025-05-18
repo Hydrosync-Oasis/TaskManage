@@ -5,7 +5,6 @@ using System.Text;
 using System.Threading.Tasks;
 using Domain.Entities;
 using Domain.Repository;
-using Entities;
 using Microsoft.EntityFrameworkCore;
 
 namespace Infrastructure.Repository {
@@ -16,6 +15,10 @@ namespace Infrastructure.Repository {
 
         public async Task<List<User>> GetUserByStartUsernameAsync(string uname) {
             return await dbContext.Users.Where(x => x.UserName.StartsWith(uname)).ToListAsync();
+        }
+
+        public async Task<UserRole?> GetUserRoleByIdAsync(int id) {
+            return (await dbContext.Users.FirstOrDefaultAsync(x => x.Id == id))?.UserRole;
         }
 
         public async Task AddUserAsync(User user) {
@@ -34,13 +37,8 @@ namespace Infrastructure.Repository {
             await dbContext.SaveChangesAsync();
         }
 
-        public Task<int> GetPendingTaskCountAsync(User user, DateTimeOffset time) {
-
-        }
-
-        public Task<User> GetUserByUsernameAsync(string uname)
-        {
-            throw new NotImplementedException();
+        public Task<User?> GetUserByUsernameAsync(string uname) {
+            return dbContext.Users.FirstOrDefaultAsync(x => x.UserName == uname);
         }
     }
 }
