@@ -9,21 +9,17 @@ namespace TaskManage.Controllers
 {
     [ApiController]
     [Route("api/[controller]")]
-    public class TaskController : ControllerBase
+    public class CommentController : ControllerBase
     {
-        private readonly ITaskService _taskService;
         private readonly ICommentService _commentService;
 
-        public TaskController(ITaskService taskService, ICommentService commentService)
+        public CommentController(ICommentService commentService)
         {
-            _taskService = taskService;
             _commentService = commentService;
         }
 
-        // ----------- 评论相关接口 -----------
-
         // 添加评论，必须登录
-        [HttpPost("comment/add")]
+        [HttpPost("add")]
         [Authorize]
         public async Task<IActionResult> AddComment([FromBody] Comment comment)
         {
@@ -34,8 +30,8 @@ namespace TaskManage.Controllers
             if (comment == null || string.IsNullOrWhiteSpace(comment.Content))
                 return BadRequest(new { error = "评论内容不能为空" });
 
-            comment.UserId = int.Parse(userIdClaim.Value);
-            comment.CreatedAt = DateTimeOffset.UtcNow;
+            comment.Owner = new User { Id = int.Parse(userIdClaim.Value) }; // 这里设置Owner对象，只设置Id
+            comment.CreatedTime = DateTimeOffset.UtcNow;
 
             try
             {
@@ -49,7 +45,7 @@ namespace TaskManage.Controllers
         }
 
         // 获取评论，公开接口
-        [HttpGet("comment/{id:int}")]
+        [HttpGet("{id:int}")]
         [AllowAnonymous]
         public async Task<IActionResult> GetComment(int id)
         {
@@ -68,7 +64,7 @@ namespace TaskManage.Controllers
         }
 
         // 删除评论，只有管理员或本人可删除
-        [HttpDelete("comment/{id:int}")]
+        [HttpDelete("{id:int}")]
         [Authorize]
         public async Task<IActionResult> DeleteComment(int id)
         {
@@ -87,7 +83,7 @@ namespace TaskManage.Controllers
                 var roleClaim = User.FindFirst(ClaimTypes.Role);
                 bool isAdmin = roleClaim != null && roleClaim.Value == nameof(UserRole.ProjectAdmin);
 
-                if (!isAdmin && comment.UserId != userId)
+                if (!isAdmin && comment.Owner.Id != userId)
                     return Forbid("无权删除该评论");
 
                 await _commentService.DeleteCommentAsync(id);
@@ -98,9 +94,19 @@ namespace TaskManage.Controllers
                 return StatusCode(500, new { error = "服务器内部错误" });
             }
         }
+    }
 
+    [ApiController]
+    [Route("api/[controller]")]
+    [Authorize]
+    public class TaskNodeController : ControllerBase
+    {
+        private readonly ITaskService _taskService;
 
-        // ----------- 任务相关接口 -----------
+        public TaskNodeController(ITaskService taskService)
+        {
+            _taskService = taskService;
+        }
 
         // 插入任务，只允许 Admin 角色
         [HttpPost("insert")]
@@ -126,7 +132,6 @@ namespace TaskManage.Controllers
 
         // 更新任务，必须是任务创建者
         [HttpPost("update")]
-        [Authorize] // 必须登录，但无角色限制，更新权限由业务逻辑判断
         public async Task<ActionResult> Update([FromBody] TaskDto dto)
         {
             if (dto.Id == null)
