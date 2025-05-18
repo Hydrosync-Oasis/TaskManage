@@ -23,7 +23,7 @@
                   <span>展示任务评论</span>
                 </div>
               </template>
-              <TaskComment />
+              <TaskComment :taskId="taskId" />
             </el-collapse-item>
             <el-collapse-item title="制定日期，截止日期" name="1">
               <template #title>
@@ -130,8 +130,10 @@ export default {
   },
   setup() {
     const selectedFile = ref('Task1')
+    const taskId = ref('') // Assuming taskId is stored in a ref
     return {
-      selectedFile
+      selectedFile,
+      taskId
     }
   }
 }
