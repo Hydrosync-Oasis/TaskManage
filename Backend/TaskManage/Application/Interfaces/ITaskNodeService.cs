@@ -6,7 +6,7 @@ using System.Text;
 using System.Threading.Tasks;
 
 namespace Application.Interfaces {
-    public interface ITaskService {
+    public interface ITaskNodeService {
         public Task UpdateTask(TaskDto dto);
 
         /// <summary>

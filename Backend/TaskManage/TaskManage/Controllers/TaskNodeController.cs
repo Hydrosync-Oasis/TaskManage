@@ -1,30 +1,26 @@
 ﻿using System.Security.Claims;
 using Application.Interfaces;
+using Application.Dtos;  // 引用你的 DTO 命名空间
 using Domain.Entities;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace TaskManage.Controllers
 {
-    // 用于前端提交新评论时的数据传输对象
-    public class CommentCreateDto
-    {
-        public int TaskId { get; set; }
-        public string Content { get; set; } = null!;
-    }
-
     [ApiController]
     [Route("api/[controller]")]
     public class CommentController : ControllerBase
     {
         private readonly ICommentService _commentService;
+        private readonly ITaskNodeService _taskNodeService;
 
-        public CommentController(ICommentService commentService)
+        public CommentController(ICommentService commentService, ITaskNodeService taskNodeService)
         {
             _commentService = commentService;
+            _taskNodeService = taskNodeService;
         }
 
-        // 添加评论，必须登录
+        // 添加评论，要求登录
         [HttpPost("add")]
         [Authorize]
         public async Task<IActionResult> AddComment([FromBody] CommentCreateDto dto)
@@ -36,10 +32,15 @@ namespace TaskManage.Controllers
             if (dto == null || string.IsNullOrWhiteSpace(dto.Content))
                 return BadRequest(new { error = "评论内容不能为空" });
 
+            // 验证 TaskNode 是否存在
+            var taskNode = await _taskNodeService.GetTaskNodeByIdAsync(dto.TaskId);
+            if (taskNode == null)
+                return BadRequest(new { error = "关联的任务不存在" });
+
             var comment = new Comment
             {
                 Content = dto.Content,
-                Task = new TaskNode { Id = dto.TaskId },
+                Task = taskNode,
                 Owner = new User { Id = int.Parse(userIdClaim.Value) },
                 CreatedTime = DateTimeOffset.UtcNow
             };
@@ -74,7 +75,7 @@ namespace TaskManage.Controllers
             }
         }
 
-        // 删除评论，只有管理员或本人可删除
+        // 删除评论，管理员或本人可操作
         [HttpDelete("{id:int}")]
         [Authorize]
         public async Task<IActionResult> DeleteComment(int id)

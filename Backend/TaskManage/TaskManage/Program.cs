@@ -51,6 +51,11 @@ namespace TaskManage {
                         )
                     };
                 });
+                // ✅ 新增的授权策略注册
+            builder.Services.AddAuthorization(options =>
+            {
+                options.AddPolicy("AdminOnly", policy => policy.RequireRole("Admin"));
+            });
             var app = builder.Build();
 
             // Configure the HTTP request pipeline.
