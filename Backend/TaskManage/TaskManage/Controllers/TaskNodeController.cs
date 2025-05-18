@@ -1,5 +1,4 @@
 ﻿using System.Security.Claims;
-using Application.DTOs;
 using Application.Interfaces;
 using Domain.Entities;
 using Microsoft.AspNetCore.Authorization;
@@ -7,6 +6,13 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace TaskManage.Controllers
 {
+    // 用于前端提交新评论时的数据传输对象
+    public class CommentCreateDto
+    {
+        public int TaskId { get; set; }
+        public string Content { get; set; } = null!;
+    }
+
     [ApiController]
     [Route("api/[controller]")]
     public class CommentController : ControllerBase
@@ -21,17 +27,22 @@ namespace TaskManage.Controllers
         // 添加评论，必须登录
         [HttpPost("add")]
         [Authorize]
-        public async Task<IActionResult> AddComment([FromBody] Comment comment)
+        public async Task<IActionResult> AddComment([FromBody] CommentCreateDto dto)
         {
             var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier);
             if (userIdClaim == null)
                 return Unauthorized(new { error = "用户身份无效" });
 
-            if (comment == null || string.IsNullOrWhiteSpace(comment.Content))
+            if (dto == null || string.IsNullOrWhiteSpace(dto.Content))
                 return BadRequest(new { error = "评论内容不能为空" });
 
-            comment.Owner = new User { Id = int.Parse(userIdClaim.Value) }; // 这里设置Owner对象，只设置Id
-            comment.CreatedTime = DateTimeOffset.UtcNow;
+            var comment = new Comment
+            {
+                Content = dto.Content,
+                Task = new TaskNode { Id = dto.TaskId },
+                Owner = new User { Id = int.Parse(userIdClaim.Value) },
+                CreatedTime = DateTimeOffset.UtcNow
+            };
 
             try
             {
@@ -93,67 +104,6 @@ namespace TaskManage.Controllers
             {
                 return StatusCode(500, new { error = "服务器内部错误" });
             }
-        }
-    }
-
-    [ApiController]
-    [Route("api/[controller]")]
-    [Authorize]
-    public class TaskNodeController : ControllerBase
-    {
-        private readonly ITaskService _taskService;
-
-        public TaskNodeController(ITaskService taskService)
-        {
-            _taskService = taskService;
-        }
-
-        // 插入任务，只允许 Admin 角色
-        [HttpPost("insert")]
-        [Authorize(Roles = "Admin")]
-        public async Task<ActionResult> InsertTask([FromBody] TaskDto? dto)
-        {
-            if (dto?.ProjectId == null || dto.Priority == null || dto.Deadline == null || string.IsNullOrWhiteSpace(dto.Title))
-            {
-                return BadRequest("参数不完整");
-            }
-
-            try
-            {
-                var userId = Convert.ToInt32(User.FindFirstValue(ClaimTypes.NameIdentifier));
-                var resultId = await _taskService.AddTask(dto, userId);
-                return Ok(new { TaskId = resultId });
-            }
-            catch (Exception e)
-            {
-                return BadRequest(e.Message);
-            }
-        }
-
-        // 更新任务，必须是任务创建者
-        [HttpPost("update")]
-        public async Task<ActionResult> Update([FromBody] TaskDto dto)
-        {
-            if (dto.Id == null)
-            {
-                return BadRequest("必须指定task id");
-            }
-
-            var info = await _taskService.GetTaskInfo(dto.Id.Value);
-            var uid = Convert.ToInt32(User.FindFirstValue(ClaimTypes.NameIdentifier));
-
-            if (info.CreateUserId != uid)
-            {
-                return Forbid("你不是创建该任务的用户");
-            }
-
-            if (dto.ProjectId != null)
-            {
-                return BadRequest("不能设置/修改所属项目");
-            }
-
-            await _taskService.UpdateTask(dto);
-            return Ok();
         }
     }
 }
