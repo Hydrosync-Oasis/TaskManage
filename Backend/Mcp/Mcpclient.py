@@ -77,7 +77,7 @@ class MCPClient:
         client = MCPClient()
         try:
             # 连接到服务端
-            await client.connect_to_server("Backend/TaskManage/Infrastructure/Mcp/Mcpsever.py")
+            await client.connect_to_server("Backend/Mcp/Mcpsever.py")
 
             # 处理用户查询
             response = await client.process_query("查看项目123的所有任务")
