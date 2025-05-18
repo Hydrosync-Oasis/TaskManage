@@ -5,6 +5,14 @@
         <div class="comment-header">
           <span class="comment-author">{{ comment.owner?.username || '未知用户' }}</span>
           <span class="comment-time">{{ formatTime(comment.createdTime) }}</span>
+          <el-button 
+            v-if="canDeleteComment(comment)"
+            type="text" 
+            class="delete-btn"
+            @click="handleDeleteComment(comment.id)"
+          >
+            删除
+          </el-button>
         </div>
         <div class="comment-content">{{ comment.content }}</div>
       </div>
@@ -30,7 +38,7 @@
 
 <script setup>
 import { ref, onMounted } from 'vue'
-import { ElMessage } from 'element-plus'
+import { ElMessage, ElMessageBox } from 'element-plus'
 import request from '@/utils/axios'
 
 /* eslint-disable no-undef */
@@ -50,6 +58,13 @@ const formatTime = (time) => {
   if (!time) return ''
   const date = new Date(time)
   return date.toLocaleString()
+}
+
+// 检查是否可以删除评论
+const canDeleteComment = (comment) => {
+  const currentUserId = localStorage.getItem('userId')
+  const userRole = localStorage.getItem('userRole')
+  return userRole === 'ProjectAdmin' || comment.owner?.id === parseInt(currentUserId)
 }
 
 // 获取评论列表
@@ -92,6 +107,30 @@ const handleAddComment = async () => {
   }
 }
 
+// 删除评论
+const handleDeleteComment = async (commentId) => {
+  try {
+    await ElMessageBox.confirm('确定要删除这条评论吗？', '提示', {
+      confirmButtonText: '确定',
+      cancelButtonText: '取消',
+      type: 'warning'
+    })
+
+    await request({
+      url: `/api/Comment/${commentId}`,
+      method: 'delete'
+    })
+
+    ElMessage.success('评论删除成功')
+    await fetchComments() // 刷新评论列表
+  } catch (error) {
+    if (error !== 'cancel') {
+      ElMessage.error('评论删除失败')
+      console.error('Failed to delete comment:', error)
+    }
+  }
+}
+
 onMounted(() => {
   fetchComments()
 })
@@ -126,6 +165,11 @@ onMounted(() => {
   color: #999;
   font-size: 12px;
   margin-right: 10px;
+}
+
+.delete-btn {
+  margin-left: auto;
+  color: #f56c6c;
 }
 
 .comment-content {
