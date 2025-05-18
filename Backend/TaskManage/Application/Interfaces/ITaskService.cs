@@ -9,7 +9,13 @@ namespace Application.Interfaces {
     public interface ITaskService {
         public Task UpdateTask(TaskDto dto);
 
-        public Task AddTask(TaskDto dto);
+        /// <summary>
+        /// 创建一个任务
+        /// </summary>
+        /// <param name="dto">任务描述对象</param>
+        /// <param name="uid">创建者id</param>
+        /// <returns></returns>
+        public Task<int> AddTask(TaskDto dto, int uid);
 
         public Task RemoveTask(int taskId);
 

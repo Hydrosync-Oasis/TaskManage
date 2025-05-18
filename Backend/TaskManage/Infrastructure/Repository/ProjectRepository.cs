@@ -13,9 +13,15 @@ namespace Infrastructure.Repository {
             return dbContext.Projects.FirstOrDefaultAsync(x => x.Id == id);
         }
 
-        public async Task UpdateProjectInfo(Project project) {
+        public async Task UpdateProjectInfoAsync(Project project) {
             dbContext.Projects.Update(project);
             await dbContext.SaveChangesAsync();
+        }
+
+        public async Task DeleteProjectAsync(int id) {
+            var proj = await dbContext.Projects.FirstOrDefaultAsync(x => x.Id == id);
+            ArgumentNullException.ThrowIfNull(proj);
+            dbContext.Projects.Remove(proj);
         }
     }
 }

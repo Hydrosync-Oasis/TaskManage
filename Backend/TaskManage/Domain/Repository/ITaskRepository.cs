@@ -4,7 +4,7 @@ using TaskStatus = Domain.Entities.TaskStatus;
 namespace Domain.Repository {
     public interface ITaskRepository {
         public Task<TaskNode?> GetNodeById(int id);
-        Task AddAsync(TaskNode task);
+        Task<int> AddAsync(TaskNode task);
         Task UpdateAsync(TaskNode task);
         Task DeleteAsync(int id);
         Task<List<TaskNode>> GetAllTasksByProjectId(int projectId);

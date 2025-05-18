@@ -8,7 +8,7 @@ using TaskStatus = Domain.Entities.TaskStatus;
 
 namespace Application.DTOs {
     public class TaskDto {
-        public int Id { get; set; }
+        public int? Id { get; set; }
 
         public string? Title { get; set; }
 
@@ -22,6 +22,7 @@ namespace Application.DTOs {
         public int? ProjectId { get; set; }
 
         public int? AssignedUid { get; set; }
+        public int? CreateUserId { get; set; }
 
         public List<int>? DependencyTaskIds { get; set; }
     }

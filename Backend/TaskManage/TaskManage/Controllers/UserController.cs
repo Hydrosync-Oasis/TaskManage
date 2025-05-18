@@ -14,6 +14,10 @@ namespace TaskManage.Controllers {
                 return BadRequest("请求体不合法");
             }
 
+            if (string.IsNullOrEmpty(dto.Password) || string.IsNullOrEmpty(dto.Username)) {
+                return BadRequest("请输入用户名和密码");
+            }
+
             await userService.Register(dto.Username, dto.Password);
             return Ok();
         }

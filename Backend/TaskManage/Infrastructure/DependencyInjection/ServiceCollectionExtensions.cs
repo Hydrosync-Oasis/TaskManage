@@ -1,6 +1,7 @@
 ﻿using Application.Interfaces;
 using Application.Services;
 using Domain.Repository;
+using Infrastructure.Auth;
 using Infrastructure.EntityConfiguration;
 using Infrastructure.Repository;
 using Microsoft.Extensions.DependencyInjection;
@@ -21,7 +22,11 @@ namespace Infrastructure.DependencyInjection {
             services.AddScoped<ITaskRepository, TaskRepository>();
             services.AddScoped<IProjectRepository, ProjectRepository>();
 
+            return services;
+        }
 
+        public static IServiceCollection AddInfrastructureServices(this IServiceCollection services) {
+            services.AddScoped<IJwtTokenGenerator, JwtTokenGenerator>();
             return services;
         }
     }

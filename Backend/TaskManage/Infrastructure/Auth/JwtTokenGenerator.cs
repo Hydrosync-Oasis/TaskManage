@@ -19,10 +19,10 @@ namespace Infrastructure.Auth
 
             var claims = new[]
             {
-                new Claim(JwtRegisteredClaimNames.Sub, userId.ToString()),
-                new Claim(JwtRegisteredClaimNames.Name, (await userRepository.GetUserByIdAsync(userId))!.UserName),
+                new Claim(ClaimTypes.NameIdentifier, userId.ToString()),
+                new Claim(ClaimTypes.Name, (await userRepository.GetUserByIdAsync(userId))!.UserName),
                 new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString()),
-                new Claim("Role",(await userRepository.GetUserRoleByIdAsync(userId)).ToString()!)
+                new Claim(ClaimTypes.Role,(await userRepository.GetUserRoleByIdAsync(userId)).ToString()!)
             };
 
             var token = new JwtSecurityToken(
