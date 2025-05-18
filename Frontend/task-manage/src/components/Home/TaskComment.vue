@@ -9,6 +9,22 @@
         <div class="comment-content">{{ comment.content }}</div>
       </div>
     </div>
+    
+    <div class="comment-input">
+      <el-input
+        v-model="newComment"
+        type="textarea"
+        :rows="3"
+        placeholder="请输入评论内容"
+      />
+      <el-button 
+        type="primary" 
+        @click="handleAddComment"
+        :disabled="!newComment.trim()"
+      >
+        发表评论
+      </el-button>
+    </div>
   </div>
 </template>
 
@@ -27,6 +43,7 @@ const props = defineProps({
 /* eslint-enable no-undef */
 
 const comments = ref([])
+const newComment = ref('')
 
 // 格式化时间
 const formatTime = (time) => {
@@ -46,6 +63,32 @@ const fetchComments = async () => {
   } catch (error) {
     ElMessage.error('获取评论失败')
     console.error('Failed to fetch comments:', error)
+  }
+}
+
+// 添加评论
+const handleAddComment = async () => {
+  if (!newComment.value.trim()) {
+    ElMessage.warning('评论内容不能为空')
+    return
+  }
+
+  try {
+    await request({
+      url: '/api/Comment/add',
+      method: 'post',
+      data: {
+        taskId: props.taskId,
+        content: newComment.value.trim()
+      }
+    })
+    
+    ElMessage.success('评论发表成功')
+    newComment.value = ''
+    await fetchComments() // 刷新评论列表
+  } catch (error) {
+    ElMessage.error('评论发表失败')
+    console.error('Failed to add comment:', error)
   }
 }
 
@@ -88,5 +131,14 @@ onMounted(() => {
 .comment-content {
   color: #333;
   line-height: 1.5;
+}
+
+.comment-input {
+  margin-top: 20px;
+}
+
+.comment-input .el-button {
+  margin-top: 10px;
+  float: right;
 }
 </style> 
