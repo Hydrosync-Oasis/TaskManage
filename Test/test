@@ -77,3 +77,15 @@ public class TaskGraphTests : TestContext
         Assert.Contains("需求分析", cut.Markup);
     }
 }
+// CommentComponentTests.cs
+public class CommentComponentTests : TestContext
+{
+    [Fact]
+    public void Submit_EmptyComment_ShowsError()
+    {
+        var cut = RenderComponent<CommentForm>();
+        cut.Find("button").Click();
+        
+        Assert.Contains("评论内容不能为空", cut.Markup);
+    }
+}
