@@ -9,17 +9,21 @@ namespace TaskManage.Controllers
 {
     [ApiController]
     [Route("api/[controller]")]
-    public class CommentController : ControllerBase
+    public class TaskController : ControllerBase
     {
+        private readonly ITaskService _taskService;
         private readonly ICommentService _commentService;
 
-        public CommentController(ICommentService commentService)
+        public TaskController(ITaskService taskService, ICommentService commentService)
         {
+            _taskService = taskService;
             _commentService = commentService;
         }
 
+        // ----------- 评论相关接口 -----------
+
         // 添加评论，必须登录
-        [HttpPost("add")]
+        [HttpPost("comment/add")]
         [Authorize]
         public async Task<IActionResult> AddComment([FromBody] Comment comment)
         {
@@ -45,7 +49,7 @@ namespace TaskManage.Controllers
         }
 
         // 获取评论，公开接口
-        [HttpGet("{id:int}")]
+        [HttpGet("comment/{id:int}")]
         [AllowAnonymous]
         public async Task<IActionResult> GetComment(int id)
         {
@@ -64,7 +68,7 @@ namespace TaskManage.Controllers
         }
 
         // 删除评论，只有管理员或本人可删除
-        [HttpDelete("{id:int}")]
+        [HttpDelete("comment/{id:int}")]
         [Authorize]
         public async Task<IActionResult> DeleteComment(int id)
         {
@@ -94,19 +98,9 @@ namespace TaskManage.Controllers
                 return StatusCode(500, new { error = "服务器内部错误" });
             }
         }
-    }
 
-    [ApiController]
-    [Route("api/[controller]")]
-    [Authorize]
-    public class TaskNodeController : ControllerBase
-    {
-        private readonly ITaskService _taskService;
 
-        public TaskNodeController(ITaskService taskService)
-        {
-            _taskService = taskService;
-        }
+        // ----------- 任务相关接口 -----------
 
         // 插入任务，只允许 Admin 角色
         [HttpPost("insert")]
@@ -132,6 +126,7 @@ namespace TaskManage.Controllers
 
         // 更新任务，必须是任务创建者
         [HttpPost("update")]
+        [Authorize] // 必须登录，但无角色限制，更新权限由业务逻辑判断
         public async Task<ActionResult> Update([FromBody] TaskDto dto)
         {
             if (dto.Id == null)
