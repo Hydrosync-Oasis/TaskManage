@@ -45,5 +45,11 @@ namespace TaskManage.Controllers {
             await taskService.UpdateTask(dto);
             return Ok();
         }
+
+        [HttpDelete("{taskId:int}")]
+        public async Task<ActionResult> DeleteTask(int taskId) {
+            await taskService.RemoveTask(taskId);
+
+        }
     }
 }
