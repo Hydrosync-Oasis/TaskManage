@@ -18,6 +18,10 @@ namespace Infrastructure
         protected override void OnModelCreating(ModelBuilder modelBuilder) {
             base.OnModelCreating(modelBuilder);
             modelBuilder.ApplyConfigurationsFromAssembly(this.GetType().Assembly);// 从指定的程序集自动找到所有的配置类
+            modelBuilder.Entity<Comment>()
+                .HasOne(c => c.Owner)
+                .WithMany(u => u.Comments)
+                .OnDelete(DeleteBehavior.Restrict);
         }
     }
 
@@ -34,8 +38,7 @@ namespace Infrastructure
                 .Build();
 
             var optionsBuilder = new DbContextOptionsBuilder<TaskManageDbContext>();
-            optionsBuilder.UseMySql(
-                conf.GetConnectionString("DefaultConnection")!, new MySqlServerVersion(new Version(8, 0)));
+            optionsBuilder.UseSqlServer(conf.GetConnectionString("DefaultConnection"));
 
             return new TaskManageDbContext(optionsBuilder.Options);
         }

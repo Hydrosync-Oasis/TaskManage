@@ -53,6 +53,7 @@ namespace Application.Services {
 
         public async Task<UserDto> GetUserInfo(int id) {
             var u = await userRepository.GetUserByIdAsync(id);
+            ArgumentNullException.ThrowIfNull(u);
             return new UserDto() {
                 Username = u.UserName,
                 Id = id,

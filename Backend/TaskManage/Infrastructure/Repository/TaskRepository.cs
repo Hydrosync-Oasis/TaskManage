@@ -9,9 +9,10 @@ namespace Infrastructure.Repository {
             return dbContext.TaskNodes.FirstOrDefaultAsync(x => x.Id == id);
         }
 
-        public async Task AddAsync(TaskNode task) {
+        public async Task<int> AddAsync(TaskNode task) {
             dbContext.TaskNodes.Add(task);
             await dbContext.SaveChangesAsync();
+            return task.Id;
         }
 
         public async Task UpdateAsync(TaskNode task) {
@@ -48,7 +49,7 @@ namespace Infrastructure.Repository {
         }
 
         public Task<List<TaskNode>> GetAllTasksByProjectId(int projectId) {
-            return dbContext.TaskNodes.Where(x => x.Project.Id == projectId).ToListAsync();
+            return dbContext.TaskNodes.Include(x=>x.DependentNodes).Where(x => x.Project.Id == projectId).ToListAsync();
         }
     }
 }

@@ -1,9 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using Application.DTOs;
+﻿using Application.DTOs;
 using Application.Interfaces;
 using Domain.Repository;
 using Mapster;
@@ -33,11 +28,12 @@ namespace Application.Services {
             if (dto.CreatedAt is not null) {
                 throw new ArgumentException("不能更改创建时间");
             }
-            projectRepository
+
+            await projectRepository.UpdateProjectInfoAsync(proj);
         }
 
         public Task DeleteProject(int projectId) {
-            throw new NotImplementedException();
+            return projectRepository.DeleteProjectAsync(projectId);
         }
     }
 }

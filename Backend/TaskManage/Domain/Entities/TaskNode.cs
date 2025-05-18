@@ -13,6 +13,8 @@ namespace Domain.Entities
         public DateTimeOffset Deadline { get; set; }
 
         public TaskStatus? TaskStatus { get; set; }
+        public User CreatedBy { get; set; }
+        public required int CreateUserId { get; set; }
 
         public List<TaskNode> DependentNodes { get; set; } = [];
         public List<Comment> Comments { get; set; } = [];
