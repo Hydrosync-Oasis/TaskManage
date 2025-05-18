@@ -54,11 +54,10 @@ namespace WebAPI.Controllers
             try
             {
                 var comment = await _commentService.GetCommentByIdAsync(id);
+                if (comment == null)
+                    return NotFound(new { error = "评论不存在" });
+                
                 return Ok(comment);
-            }
-            catch (ArgumentException ex)
-            {
-                return NotFound(new { error = ex.Message });
             }
             catch (Exception)
             {
@@ -76,15 +75,18 @@ namespace WebAPI.Controllers
                 var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier);
                 if (userIdClaim == null)
                     return Unauthorized(new { error = "用户身份无效" });
+
                 int userId = int.Parse(userIdClaim.Value);
 
-                // 先查找评论，验证权限
                 var comment = await _commentService.GetCommentByIdAsync(id);
                 if (comment == null)
                     return NotFound(new { error = "评论不存在" });
 
                 // 判断是否是管理员或评论所有者
-                bool isAdmin = User.IsInRole("Admin"); // 这里根据你的角色机制判断
+                // 这里要根据JWT里角色的Claim来判断，假设你在Token中角色Claim类型是 ClaimTypes.Role
+                var roleClaim = User.FindFirst(ClaimTypes.Role);
+                bool isAdmin = roleClaim != null && roleClaim.Value == "Admin";
+
                 if (!isAdmin && comment.UserId != userId)
                     return Forbid("无权删除该评论");
 
