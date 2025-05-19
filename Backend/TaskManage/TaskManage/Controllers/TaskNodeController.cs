@@ -12,9 +12,9 @@ namespace TaskManage.Controllers
     public class CommentController : ControllerBase
     {
         private readonly ICommentService _commentService;
-        private readonly ITaskNodeService _taskNodeService;
+        private readonly ITaskService _taskNodeService;
 
-        public CommentController(ICommentService commentService, ITaskNodeService taskNodeService)
+        public CommentController(ICommentService commentService, ITaskService taskNodeService)
         {
             _commentService = commentService;
             _taskNodeService = taskNodeService;
