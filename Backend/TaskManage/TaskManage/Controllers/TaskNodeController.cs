@@ -12,12 +12,12 @@ namespace TaskManage.Controllers
     public class CommentController : ControllerBase
     {
         private readonly ICommentService _commentService;
-        private readonly ITaskService _taskNodeService;
+        private readonly ITaskService _taskService;
 
-        public CommentController(ICommentService commentService, ITaskService taskNodeService)
+        public CommentController(ICommentService commentService, ITaskService taskService)
         {
             _commentService = commentService;
-            _taskNodeService = taskNodeService;
+            _taskService = taskService;
         }
 
         // 添加评论，要求登录
@@ -33,7 +33,7 @@ namespace TaskManage.Controllers
                 return BadRequest(new { error = "评论内容不能为空" });
 
             // 验证 TaskNode 是否存在
-            var taskNode = await _taskNodeService.GetTaskNodeByIdAsync(dto.TaskId);
+            var taskNode = await _taskService.GetTaskNodeByIdAsync(dto.TaskId);
             if (taskNode == null)
                 return BadRequest(new { error = "关联的任务不存在" });
 

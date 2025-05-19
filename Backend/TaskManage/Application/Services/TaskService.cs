@@ -107,5 +107,13 @@ namespace Application.Services {
         public async Task<TaskDto> GetTaskInfo(int taskId) {
             return (await taskRepository.GetNodeById(taskId)).Adapt<TaskDto>();
         }
+
+        public Task<TaskNode> GetTaskNodeByIdAsync(int id) {
+            var node = taskRepository.GetNodeById(id);
+            if (node is null) {
+                throw new ArgumentNullException(nameof(node));
+            }
+            return node;
+        }
     }
 }
