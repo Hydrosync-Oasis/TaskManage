@@ -1,51 +1,51 @@
-﻿using System;
-using System.Collections.Generic;
-using System.ComponentModel;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using Application.DTOs;
+﻿using Application.DTOs;
 using Application.Interfaces;
 using Domain.Entities;
 using Domain.Repository;
 using Mapster;
-using Microsoft.EntityFrameworkCore;
 
-namespace Application.Services {
-    public class TaskService(ITaskRepository taskRepository, IUserRepository userRepository) : ITaskService {
-        public async Task UpdateTask(TaskDto dto) {
-            ArgumentNullException.ThrowIfNull(dto.Id);
+namespace Application.Services
+{
+    public class TaskService : ITaskService
+    {
+        private readonly ITaskRepository taskRepository;
+        private readonly IUserRepository userRepository;
+        private readonly ICommentRepository commentRepository;
+
+        public TaskService(ITaskRepository taskRepository, IUserRepository userRepository, ICommentRepository commentRepository)
+        {
+            this.taskRepository = taskRepository;
+            this.userRepository = userRepository;
+            this.commentRepository = commentRepository;
+        }
+
+        public async Task UpdateTask(TaskDto dto)
+        {
+            if (dto.Id == null) throw new ArgumentNullException(nameof(dto.Id));
             var task = await taskRepository.GetNodeById(dto.Id.Value);
-            ArgumentNullException.ThrowIfNull(task);
-            if (dto.Title is not null) {
-                task.Title = dto.Title;
-            }
-            if (dto.Description is not null) {
-                task.Description = dto.Description;
-            }
-            if (dto.Status is not null) {
-                task.TaskStatus = dto.Status;
-            }
-            if (dto.Deadline is not null) {
-                task.Deadline = dto.Deadline.Value;
-            }
-            if (dto.Priority is not null) {
-                task.Priority = dto.Priority.Value;
-            }
-            if (dto.AssignedUid is not null) {
-                task.AssignedUser = await userRepository.GetUserByIdAsync(dto.Id.Value);
+            if (task == null) throw new ArgumentNullException(nameof(task));
+
+            if (dto.Title != null) task.Title = dto.Title;
+            if (dto.Description != null) task.Description = dto.Description;
+            if (dto.Status != null) task.TaskStatus = dto.Status;
+            if (dto.Deadline != null) task.Deadline = dto.Deadline.Value;
+            if (dto.Priority != null) task.Priority = dto.Priority.Value;
+
+            if (dto.AssignedUid != null)
+            {
+                // 注意这里修正为通过 AssignedUid 查用户
+                task.AssignedUser = await userRepository.GetUserByIdAsync(dto.AssignedUid.Value);
             }
 
-            if (dto.DependencyTaskIds is not null) {
-                var tasks = await taskRepository.GetAllTasksByProjectId(task.Project.Id);
-                var newDependencyTasks =
-                    dto.DependencyTaskIds.Select(x=>tasks.First(y=>y.Id == x)).ToList();
+            if (dto.DependencyTaskIds != null)
+            {
+                var tasks = await taskRepository.GetAllTasksByProjectId(task.ProjectId);
+                var newDependencyTasks = dto.DependencyTaskIds.Select(x => tasks.First(y => y.Id == x)).ToList();
 
-                if (HasCircle(tasks.First(x => x.Id == task.Id), newDependencyTasks)) {
+                if (HasCircle(task, newDependencyTasks))
+                {
                     throw new Exception("出现了环形依赖");
                 }
-
-                // 说明没有依赖
 
                 task.DependentNodes = newDependencyTasks;
             }
@@ -53,41 +53,45 @@ namespace Application.Services {
             await taskRepository.UpdateAsync(task);
         }
 
-        private static bool HasCircle(TaskNode startNode, List<TaskNode> modifiedDependencyNodes) {
-            // 判断从startNode开始是否会dfs到它自己
-            var res = F(startNode, [startNode], [startNode]);
-            return res;
-
-            //是否有环
-            bool F(TaskNode node, HashSet<TaskNode> seen, HashSet<TaskNode> stackSet) {
-                if (!seen.Add(node)) {
+        private static bool HasCircle(TaskNode startNode, List<TaskNode> modifiedDependencyNodes)
+        {
+            bool F(TaskNode node, HashSet<TaskNode> seen, HashSet<TaskNode> stackSet)
+            {
+                if (!seen.Add(node))
                     return false;
-                }
-                foreach (var d in GetDependencyList(node)) {
-                    stackSet.Add(d);
 
-                    if (F(d, seen, stackSet)) {
+                stackSet.Add(node);
+
+                foreach (var d in GetDependencyList(node))
+                {
+                    if (stackSet.Contains(d))
                         return true;
-                    }
 
-                    stackSet.Remove(d);
+                    if (F(d, seen, stackSet))
+                        return true;
                 }
 
+                stackSet.Remove(node);
                 return false;
             }
 
-            List<TaskNode> GetDependencyList(TaskNode node) {
+            List<TaskNode> GetDependencyList(TaskNode node)
+            {
                 return node == startNode ? modifiedDependencyNodes : node.DependentNodes;
             }
+
+            return F(startNode, new HashSet<TaskNode>(), new HashSet<TaskNode>());
         }
 
-        public async Task<int> AddTask(TaskDto dto, int uid) {
-            ArgumentNullException.ThrowIfNull(dto.ProjectId);
-            ArgumentNullException.ThrowIfNull(dto.Priority);
-            ArgumentNullException.ThrowIfNull(dto.Deadline);
-            ArgumentNullException.ThrowIfNull(dto.Title);
-            
-            TaskNode node = new() {
+        public async Task<int> AddTask(TaskDto dto, int uid)
+        {
+            if (dto.ProjectId == null) throw new ArgumentNullException(nameof(dto.ProjectId));
+            if (dto.Priority == null) throw new ArgumentNullException(nameof(dto.Priority));
+            if (dto.Deadline == null) throw new ArgumentNullException(nameof(dto.Deadline));
+            if (dto.Title == null) throw new ArgumentNullException(nameof(dto.Title));
+
+            var node = new TaskNode
+            {
                 Title = dto.Title,
                 AssignedUserId = dto.AssignedUid,
                 Deadline = dto.Deadline.Value,
@@ -97,23 +101,49 @@ namespace Application.Services {
                 ProjectId = dto.ProjectId.Value,
                 CreateUserId = uid
             };
+
             return await taskRepository.AddAsync(node);
         }
 
-        public Task RemoveTask(int taskId) {
+        public Task RemoveTask(int taskId)
+        {
             return taskRepository.DeleteAsync(taskId);
         }
 
-        public async Task<TaskDto> GetTaskInfo(int taskId) {
-            return (await taskRepository.GetNodeById(taskId)).Adapt<TaskDto>();
+        public async Task<TaskDto> GetTaskInfo(int taskId)
+        {
+            var taskNode = await taskRepository.GetNodeById(taskId);
+            return taskNode.Adapt<TaskDto>();
         }
 
-        public Task<TaskNode> GetTaskNodeByIdAsync(int id) {
-            var node = taskRepository.GetNodeById(id);
-            if (node is null) {
-                throw new ArgumentNullException(nameof(node));
-            }
+        public async Task<TaskNode> GetTaskNodeByIdAsync(int id)
+        {
+            var node = await taskRepository.GetNodeById(id);
+            if (node == null) throw new ArgumentNullException(nameof(node));
             return node;
         }
+
+        // 评论相关实现
+        public Task AddCommentAsync(Comment comment)
+        {
+            return commentRepository.AddAsync(comment);
+        }
+
+        public async Task<Comment> GetCommentByIdAsync(int id)
+        {
+            var comments = await commentRepository.GetAllCommentsByTaskIdAsync(id);
+            var comment = comments.FirstOrDefault(c => c.Id == id);
+            if (comment == null)
+                throw new Exception($"找不到 ID 为 {id} 的评论");
+            return comment;
+        }
+
+
+        public Task DeleteCommentAsync(int id)
+        {
+            return commentRepository.DeleteByCommentIdAsync(id);
+        }
     }
+
+
 }
