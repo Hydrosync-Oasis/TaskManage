@@ -17,9 +17,9 @@ class MCPClient:
 
         # 初始化AI模型
         self.llm = ChatOpenAI(
-            api_key=os.getenv("sk-mrrstlrlgqdnwqpxomwfstzuvuulomaeugersyfbfsihnyts"),  # DeepSeek的API密钥
-            base_url="https://api.deepseek.com/v1",  # DeepSeek API端点
-            model="deepseek-chat"  # DeepSeek模型名称
+            api_key=os.getenv("sk-mrrstlrlgqdnwqpxomwfstzuvuulomaeugersyfbfsihnyts"),
+            base_url="https://api.openai.com/v1",
+            model="gtp-3.5-turbo"
         )
 
     async def connect_to_server(self, server_script: str, self=None):
@@ -30,11 +30,11 @@ class MCPClient:
             args=[server_script]
         )
 
-        # 建立stdio连接
+       
         stdio, write = await self.exit_stack.enter_async_context(
             stdio_client(server_params)
 
-        # 创建MCP会话
+
         self.session = await self.exit_stack.enter_async_context(
             ClientSession(stdio, write))
 
