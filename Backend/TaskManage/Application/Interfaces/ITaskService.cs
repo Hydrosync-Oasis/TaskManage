@@ -4,9 +4,10 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using Domain.Entities;
 
 namespace Application.Interfaces {
-    public interface ITaskNodeService {
+    public interface ITaskService {
         public Task UpdateTask(TaskDto dto);
 
         /// <summary>
@@ -20,5 +21,7 @@ namespace Application.Interfaces {
         public Task RemoveTask(int taskId);
 
         public Task<TaskDto> GetTaskInfo(int taskId);
+
+        public Task<TaskNode> GetTaskNodeByIdAsync(int id);
     }
 }

@@ -32,22 +32,7 @@ namespace Infrastructure.Repository {
             return dbContext.TaskNodes.Where(x => x.TaskStatus == status).ToListAsync();
         }
 
-        public async Task<List<Comment>> GetAllCommentsByTaskIdAsync(int id) {
-            var task = await dbContext.TaskNodes.Include(x => x.Comments).FirstOrDefaultAsync(x => x.Id == id);
-            ArgumentNullException.ThrowIfNull(task);
-            return task.Comments;
-        }
-
-        public async Task DeleteByCommentIdAsync(int id) {
-            var task = await dbContext.TaskNodes.Include(x => x.Comments).FirstOrDefaultAsync(x=>x.Id == id);
-            ArgumentNullException.ThrowIfNull(task);
-            dbContext.Comments.Remove(task.Comments.First(x => x.Id == id));
-        }
-
-        public async Task AddAsync(Comment comment) {
-            await dbContext.Comments.AddAsync(comment);
-        }
-
+       
         public Task<List<TaskNode>> GetAllTasksByProjectId(int projectId) {
             return dbContext.TaskNodes.Include(x=>x.DependentNodes).Where(x => x.Project.Id == projectId).ToListAsync();
         }
