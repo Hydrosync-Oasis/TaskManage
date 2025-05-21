@@ -99,5 +99,20 @@ namespace TaskManage.Controllers
                 return StatusCode(500, new { message = "删除项目失败", error = ex.Message });
             }
         }
+
+        // 新增接口：根据项目id获取任务列表
+        [HttpGet("{id}/tasks")]
+        public async Task<ActionResult<List<TaskNode>>> GetTasksForProject(int id)
+        {
+            try
+            {
+                var tasks = await _projectService.GetTasksByProjectIdAsync(id);
+                return Ok(tasks);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { message = "获取任务列表失败", error = ex.Message });
+            }
+        }
     }
 }
