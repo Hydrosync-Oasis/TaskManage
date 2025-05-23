@@ -11,15 +11,7 @@ namespace TaskManage.Controllers
     [ApiController]
     [Route("api/[controller]")]
     [Authorize]
-    public class TaskController : ControllerBase
-    {
-        private readonly ITaskService _taskService;
-
-        public TaskController(ITaskService taskService)
-        {
-            _taskService = taskService;
-        }
-
+    public class TaskController(ITaskService taskService) : ControllerBase {
         // 插入任务（管理员）
         [HttpPost("insert")]
         [Authorize(Roles = "Admin")]
@@ -30,7 +22,7 @@ namespace TaskManage.Controllers
 
             try
             {
-                var resultId = await _taskService.AddTask(dto, Convert.ToInt32(User.FindFirstValue(ClaimTypes.NameIdentifier)));
+                var resultId = await taskService.AddTask(dto, Convert.ToInt32(User.FindFirstValue(ClaimTypes.NameIdentifier)));
                 return Ok(new { TaskId = resultId });
             }
             catch (Exception e)
@@ -43,24 +35,28 @@ namespace TaskManage.Controllers
         [HttpPost("update")]
         public async Task<ActionResult> Update([FromBody] TaskDto dto)
         {
-            if (dto.Id is null)
-                return BadRequest("必须指定task id");
+            try {
+                if (dto.Id is null)
+                    return BadRequest("必须指定task id");
 
-            var info = await _taskService.GetTaskInfo(dto.Id.Value);
-            var uid = Convert.ToInt32(User.FindFirstValue(ClaimTypes.NameIdentifier));
-            if (info.CreateUserId != uid)
-                return Forbid("你不是创建该任务的用户");
+                var info = await taskService.GetTaskInfo(dto.Id.Value);
+                var uid = Convert.ToInt32(User.FindFirstValue(ClaimTypes.NameIdentifier));
+                if (info.CreateUserId != uid)
+                    return Forbid("你不是创建该任务的用户");
 
-            if (dto.ProjectId != null)
-                return BadRequest("不能设置/修改所属项目");
+                if (dto.ProjectId != null)
+                    return BadRequest("不能设置/修改所属项目");
 
-            await _taskService.UpdateTask(dto);
-            return Ok();
+                await taskService.UpdateTask(dto);
+                return Ok();
+            } catch (Exception e) {
+                return StatusCode(500, e.Message);
+            }
         }
 
         // 添加评论（登录用户）
         [HttpPost("comment/add")]
-        public async Task<IActionResult> AddComment([FromBody] CommentCreateDto dto)
+        public async Task<IActionResult> AddComment([FromBody] CommentDto dto)
         {
             var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier);
             if (userIdClaim == null)
@@ -69,7 +65,7 @@ namespace TaskManage.Controllers
             if (dto == null || string.IsNullOrWhiteSpace(dto.Content))
                 return BadRequest(new { error = "评论内容不能为空" });
 
-            var taskNode = await _taskService.GetTaskNodeByIdAsync(dto.TaskId);
+            var taskNode = await taskService.GetTaskNodeByIdAsync(dto.TaskId);
             if (taskNode == null)
                 return BadRequest(new { error = "关联的任务不存在" });
 
@@ -88,12 +84,12 @@ namespace TaskManage.Controllers
 
             try
             {
-                await _taskService.AddCommentAsync(comment);
+                await taskService.AddCommentAsync(comment);
                 return Ok(new { message = "评论添加成功" });
             }
-            catch (Exception)
+            catch (Exception e)
             {
-                return StatusCode(500, new { error = "服务器内部错误" });
+                return StatusCode(500, new { error = e.Message});
             }
         }
 
@@ -104,15 +100,15 @@ namespace TaskManage.Controllers
         {
             try
             {
-                var comment = await _taskService.GetCommentByIdAsync(id);
+                var comment = await taskService.GetCommentByIdAsync(id);
                 if (comment == null)
                     return NotFound(new { error = "评论不存在" });
 
                 return Ok(comment);
             }
-            catch (Exception)
+            catch (Exception e)
             {
-                return StatusCode(500, new { error = "服务器内部错误" });
+                return StatusCode(500, new { error = e.Message});
             }
         }
 
@@ -128,7 +124,7 @@ namespace TaskManage.Controllers
 
             try
             {
-                var comment = await _taskService.GetCommentByIdAsync(id);
+                var comment = await taskService.GetCommentByIdAsync(id);
                 if (comment == null)
                     return NotFound(new { error = "评论不存在" });
 
@@ -138,12 +134,12 @@ namespace TaskManage.Controllers
                 if (!isAdmin && comment.Owner.Id != userId)
                     return Forbid("无权删除该评论");
 
-                await _taskService.DeleteCommentAsync(id);
+                await taskService.DeleteCommentAsync(id);
                 return Ok(new { message = "评论删除成功" });
             }
-            catch (Exception)
+            catch (Exception e)
             {
-                return StatusCode(500, new { error = "服务器内部错误" });
+                return StatusCode(500, new { error = e.Message});
             }
         }
     }

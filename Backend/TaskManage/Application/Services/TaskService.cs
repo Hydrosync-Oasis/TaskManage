@@ -133,9 +133,7 @@ namespace Application.Services
         {
             var comments = await commentRepository.GetAllCommentsByTaskIdAsync(id);
             var comment = comments.FirstOrDefault(c => c.Id == id);
-            if (comment == null)
-                throw new Exception($"找不到 ID 为 {id} 的评论");
-            return comment;
+            return comment ?? throw new Exception($"找不到 ID 为 {id} 的评论");
         }
 
 

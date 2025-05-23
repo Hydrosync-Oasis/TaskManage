@@ -10,21 +10,13 @@ namespace TaskManage.Controllers
     [ApiController]
     [Route("api/[controller]")]
     [Authorize] // 登录用户才能访问所有接口
-    public class ProjectController : ControllerBase
-    {
-        private readonly IProjectService _projectService;
-
-        public ProjectController(IProjectService projectService)
-        {
-            _projectService = projectService;
-        }
-
+    public class ProjectController(IProjectService projectService) : ControllerBase {
         [HttpGet]
         public async Task<IActionResult> GetAllProjects()
         {
             try
             {
-                var projects = await _projectService.GetAllAsync();
+                var projects = await projectService.GetAllAsync();
                 return Ok(projects);
             }
             catch (Exception ex)
@@ -38,7 +30,7 @@ namespace TaskManage.Controllers
         {
             try
             {
-                var project = await _projectService.GetByIdAsync(id);
+                var project = await projectService.GetByIdAsync(id);
                 if (project == null)
                     return NotFound(new { message = "未找到该项目" });
 
@@ -55,7 +47,7 @@ namespace TaskManage.Controllers
         {
             try
             {
-                var created = await _projectService.CreateAsync(dto);
+                var created = await projectService.CreateAsync(dto);
                 return CreatedAtAction(nameof(GetProjectById), new { id = created.Id }, created);
             }
             catch (Exception ex)
@@ -64,13 +56,13 @@ namespace TaskManage.Controllers
             }
         }
 
-        [HttpPut("{id}")]
+        [HttpPut("{id:int}")]
         [Authorize(Roles = "Admin")]
         public async Task<IActionResult> UpdateProject(int id, [FromBody] ProjectDto dto)
         {
             try
             {
-                var updated = await _projectService.UpdateAsync(id, dto);
+                var updated = await projectService.UpdateAsync(id, dto);
                 if (updated == null)
                     return NotFound(new { message = "未找到要更新的项目" });
 
@@ -82,13 +74,13 @@ namespace TaskManage.Controllers
             }
         }
 
-        [HttpDelete("{id}")]
+        [HttpDelete("{id:int}")]
         [Authorize(Roles = "Admin")]
         public async Task<IActionResult> DeleteProject(int id)
         {
             try
             {
-                var deleted = await _projectService.DeleteAsync(id);
+                var deleted = await projectService.DeleteAsync(id);
                 if (!deleted)
                     return NotFound(new { message = "未找到要删除的项目" });
 
@@ -101,12 +93,12 @@ namespace TaskManage.Controllers
         }
 
         // 新增接口：根据项目id获取任务列表
-        [HttpGet("{id}/tasks")]
+        [HttpGet("{id:int}/tasks")]
         public async Task<ActionResult<List<TaskNode>>> GetTasksForProject(int id)
         {
             try
             {
-                var tasks = await _projectService.GetTasksByProjectIdAsync(id);
+                var tasks = await projectService.GetTasksByProjectIdAsync(id);
                 return Ok(tasks);
             }
             catch (Exception ex)
