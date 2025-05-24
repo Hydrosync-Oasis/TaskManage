@@ -1,5 +1,4 @@
 ﻿using Domain.Entities;
-using Infrastructure.EntityConfiguration;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Design;
 using Microsoft.Extensions.Configuration;
