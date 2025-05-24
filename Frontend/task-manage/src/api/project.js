@@ -40,4 +40,12 @@ export function deleteProject(id) {
     url: `/api/Project/${id}`,
     method: 'delete'
   })
+}
+
+// 获取项目所有任务
+export function getProjectTasks(projectId) {
+  return request({
+    url: `/api/Project/${projectId}/tasks`,
+    method: 'get'
+  })
 } 
