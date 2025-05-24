@@ -15,6 +15,7 @@ namespace Infrastructure.DependencyInjection {
             // 注册服务
             services.AddScoped<IUserService, UserService>();
             services.AddScoped<ITaskService, TaskService>();
+            services.AddScoped<IProjectService, ProjectService>();
 
             return services;
         }
@@ -25,6 +26,7 @@ namespace Infrastructure.DependencyInjection {
             services.AddScoped<IUserRepository, UserRepository>();
             services.AddScoped<ITaskRepository, TaskRepository>();
             services.AddScoped<IProjectRepository, ProjectRepository>();
+            services.AddScoped<ICommentRepository, CommentRepository>();
 
             return services;
         }
