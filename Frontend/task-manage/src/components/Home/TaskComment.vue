@@ -37,15 +37,15 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, watch } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
-import request from '@/utils/axios'
+import { addTaskComment, getTaskComment, deleteTaskComment } from '@/api/task'
 
 /* eslint-disable no-undef */
 const props = defineProps({
   taskId: {
-    type: Number,
-    required: true
+    type: [Number, String],
+    default: null
   }
 })
 /* eslint-enable no-undef */
@@ -69,33 +69,37 @@ const canDeleteComment = (comment) => {
 
 // 获取评论列表
 const fetchComments = async () => {
+  if (!props.taskId) {
+    comments.value = []
+    return
+  }
+  
   try {
-    const response = await request({
-      url: `/api/Comment/${props.taskId}`,
-      method: 'get'
-    })
+    const response = await getTaskComment(props.taskId)
     comments.value = response.data
   } catch (error) {
     ElMessage.error('获取评论失败')
     console.error('Failed to fetch comments:', error)
+    comments.value = []
   }
 }
 
 // 添加评论
 const handleAddComment = async () => {
+  if (!props.taskId) {
+    ElMessage.warning('请先选择一个任务')
+    return
+  }
+  
   if (!newComment.value.trim()) {
     ElMessage.warning('评论内容不能为空')
     return
   }
 
   try {
-    await request({
-      url: '/api/Comment/add',
-      method: 'post',
-      data: {
-        taskId: props.taskId,
-        content: newComment.value.trim()
-      }
+    await addTaskComment({
+      taskId: props.taskId,
+      content: newComment.value.trim()
     })
     
     ElMessage.success('评论发表成功')
@@ -116,10 +120,7 @@ const handleDeleteComment = async (commentId) => {
       type: 'warning'
     })
 
-    await request({
-      url: `/api/Comment/${commentId}`,
-      method: 'delete'
-    })
+    await deleteTaskComment(commentId)
 
     ElMessage.success('评论删除成功')
     await fetchComments() // 刷新评论列表
@@ -131,8 +132,19 @@ const handleDeleteComment = async (commentId) => {
   }
 }
 
+// 监听任务ID变化，重新获取评论
+watch(() => props.taskId, (newTaskId) => {
+  if (newTaskId) {
+    fetchComments()
+  } else {
+    comments.value = []
+  }
+}, { immediate: true })
+
 onMounted(() => {
-  fetchComments()
+  if (props.taskId) {
+    fetchComments()
+  }
 })
 </script>
 
