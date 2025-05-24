@@ -27,10 +27,10 @@ export function addTaskComment(data) {
   })
 }
 
-// 获取任务评论
-export function getTaskComment(id) {
+// 获取任务的所有评论
+export function getTaskComments(taskId) {
   return request({
-    url: `/api/Task/comment/${id}`,
+    url: `/api/Task/comment/task/${taskId}`,
     method: 'get'
   })
 }
@@ -40,13 +40,5 @@ export function deleteTaskComment(id) {
   return request({
     url: `/api/Task/comment/${id}`,
     method: 'delete'
-  })
-}
-
-// 获取项目所有任务
-export function getProjectTasks(projectId) {
-  return request({
-    url: `/api/Project/${projectId}/tasks`,
-    method: 'get'
   })
 } 

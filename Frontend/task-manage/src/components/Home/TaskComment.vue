@@ -1,7 +1,14 @@
 <template>
   <div class="comment-section">
     <div class="comment-list">
-      <div v-for="comment in comments" :key="comment.id" class="comment-item">
+      <div v-if="comments.length === 0" class="empty-comment">
+        <el-empty description="暂无评论" :image-size="100">
+          <template #description>
+            <p>该任务暂无评论，快来添加第一条评论吧！</p>
+          </template>
+        </el-empty>
+      </div>
+      <div v-else v-for="comment in comments" :key="comment.id" class="comment-item">
         <div class="comment-header">
           <span class="comment-author">{{ comment.owner?.username || '未知用户' }}</span>
           <span class="comment-time">{{ formatTime(comment.createdTime) }}</span>
@@ -24,11 +31,12 @@
         type="textarea"
         :rows="3"
         placeholder="请输入评论内容"
+        :disabled="!taskId"
       />
       <el-button 
         type="primary" 
         @click="handleAddComment"
-        :disabled="!newComment.trim()"
+        :disabled="!newComment.trim() || !taskId"
       >
         发表评论
       </el-button>
@@ -39,7 +47,7 @@
 <script setup>
 import { ref, onMounted } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
-import request from '@/utils/axios'
+import { addTaskComment, deleteTaskComment, getTaskComments } from '@/api/task'
 
 /* eslint-disable no-undef */
 const props = defineProps({
@@ -69,15 +77,17 @@ const canDeleteComment = (comment) => {
 
 // 获取评论列表
 const fetchComments = async () => {
+  if (!props.taskId) {
+    comments.value = []
+    return
+  }
+  
   try {
-    const response = await request({
-      url: `/api/Task/comment/task/${props.taskId}`,
-      method: 'get'
-    })
+    const response = await getTaskComments(props.taskId)
     comments.value = response.data
   } catch (error) {
     // 错误已由响应拦截器处理，这里可以添加额外的处理逻辑
-    console.error('Failed to fetch comments:', error)
+    console.error('获取评论失败:', error)
     comments.value = [] // 确保评论列表为空数组而不是undefined
   }
 }
@@ -90,20 +100,16 @@ const handleAddComment = async () => {
   }
 
   try {
-    await request({
-      url: '/api/Task/comment/add',
-      method: 'post',
-      data: {
-        taskId: props.taskId,
-        content: newComment.value.trim()
-      }
+    await addTaskComment({
+      taskId: props.taskId,
+      content: newComment.value.trim()
     })
     
     ElMessage.success('评论发表成功')
     newComment.value = ''
     await fetchComments() // 刷新评论列表
   } catch (error) {
-    console.error('Failed to add comment:', error)
+    console.error('发表评论失败:', error)
   }
 }
 
@@ -116,16 +122,13 @@ const handleDeleteComment = async (commentId) => {
       type: 'warning'
     })
 
-    await request({
-      url: `/api/Task/comment/${commentId}`,
-      method: 'delete'
-    })
+    await deleteTaskComment(commentId)
 
     ElMessage.success('评论删除成功')
     await fetchComments() // 刷新评论列表
   } catch (error) {
     if (error !== 'cancel') {
-      console.error('Failed to delete comment:', error)
+      console.error('删除评论失败:', error)
     }
   }
 }
@@ -183,5 +186,13 @@ onMounted(() => {
 .comment-input .el-button {
   margin-top: 10px;
   float: right;
+}
+
+.empty-comment {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 40px 0;
+  color: #909399;
 }
 </style> 
