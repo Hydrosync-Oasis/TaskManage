@@ -3,6 +3,8 @@ using Application.Dtos;
 using Application.DTOs;
 using Application.Interfaces;
 using Domain.Entities;
+using Domain.Repository;
+using Infrastructure.Repository;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
@@ -12,6 +14,7 @@ namespace TaskManage.Controllers
     [Route("api/[controller]")]
     [Authorize]
     public class TaskController(ITaskService taskService) : ControllerBase {
+        private readonly IUserRepository userRepository;
         // 插入任务（管理员）
         [HttpPost("insert")]
         [Authorize(Roles = "Admin")]
@@ -69,18 +72,18 @@ namespace TaskManage.Controllers
             if (taskNode == null)
                 return BadRequest(new { error = "关联的任务不存在" });
 
+            var userId = int.Parse(userIdClaim.Value);
+            var user = await userRepository.GetUserByIdAsync(userId);
+            if (user == null) return Unauthorized(new { error = "用户不存在" });
+
             var comment = new Comment
             {
                 Content = dto.Content,
                 Task = taskNode,
-                Owner = new User
-                {
-                    Id = int.Parse(userIdClaim.Value),
-                    UserName = "UnknownUserName",       // 临时值，防止 CS9035 报错
-                    PasswordHash = "UnknownPasswordHash" // 临时值，防止 CS9035 报错
-                },
+                Owner = user,
                 CreatedTime = DateTimeOffset.UtcNow
             };
+
 
             try
             {
