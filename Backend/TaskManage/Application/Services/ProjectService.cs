@@ -11,10 +11,12 @@ namespace Application.Services
     public class ProjectService : IProjectService
     {
         private readonly IProjectRepository _projectRepository;
+        private readonly ITaskRepository _taskRepository;
 
-        public ProjectService(IProjectRepository projectRepository)
+        public ProjectService(IProjectRepository projectRepository, ITaskRepository taskRepository)
         {
             _projectRepository = projectRepository;
+            _taskRepository = taskRepository;
         }
 
         public async Task<IEnumerable<ProjectDto>> GetAllAsync()
@@ -68,10 +70,7 @@ namespace Application.Services
 
         public async Task<IEnumerable<TaskDto>> GetTasksByProjectIdAsync(int projectId)
         {
-            var tasks = await _context.TaskNodes
-                .Where(t => t.ProjectId == projectId)
-                .ToListAsync();
-
+            var tasks = await _taskRepository.GetTasksByProjectIdAsync(projectId);
             return tasks.Adapt<IEnumerable<TaskDto>>();
         }
 
@@ -79,21 +78,14 @@ namespace Application.Services
         {
             var task = taskDto.Adapt<TaskNode>();
             task.ProjectId = projectId;
-            _context.TaskNodes.Add(task);
-            await _context.SaveChangesAsync();
-            return task.Adapt<TaskDto>();
+            var added = await _taskRepository.AddTaskToProjectAsync(task);
+            return added.Adapt<TaskDto>();
         }
 
         public async Task<bool> RemoveTaskFromProjectAsync(int projectId, int taskId)
         {
-            var task = await _context.TaskNodes
-                .FirstOrDefaultAsync(t => t.ProjectId == projectId && t.Id == taskId);
-
-            if (task == null) return false;
-
-            _context.TaskNodes.Remove(task);
-            await _context.SaveChangesAsync();
-            return true;
+            return await _taskRepository.RemoveTaskFromProjectAsync(projectId, taskId);
         }
+
     }
 }
