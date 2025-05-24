@@ -36,5 +36,33 @@ namespace Infrastructure.Repository {
         public Task<List<TaskNode>> GetAllTasksByProjectId(int projectId) {
             return dbContext.TaskNodes.Include(x=>x.DependentNodes).Where(x => x.Project.Id == projectId).ToListAsync();
         }
+
+
+        //实现 ITaskRepository 的接口要求
+        public async Task<IEnumerable<TaskNode>> GetTasksByProjectIdAsync(int projectId)
+        {
+            return await dbContext.TaskNodes
+                .Where(t => t.ProjectId == projectId)
+                .ToListAsync();
+        }
+
+        public async Task<TaskNode> AddTaskToProjectAsync(TaskNode task)
+        {
+            dbContext.TaskNodes.Add(task);
+            await dbContext.SaveChangesAsync();
+            return task;
+        }
+
+        public async Task<bool> RemoveTaskFromProjectAsync(int projectId, int taskId)
+        {
+            var task = await dbContext.TaskNodes
+                .FirstOrDefaultAsync(t => t.ProjectId == projectId && t.Id == taskId);
+
+            if (task == null) return false;
+
+            dbContext.TaskNodes.Remove(task);
+            await dbContext.SaveChangesAsync();
+            return true;
+        }
     }
 }
