@@ -2,6 +2,7 @@
 using Application.Dtos;
 using Application.DTOs;
 using Application.Interfaces;
+using Application.Services;
 using Domain.Entities;
 using Domain.Repository;
 using Infrastructure.Repository;
@@ -13,8 +14,7 @@ namespace TaskManage.Controllers
     [ApiController]
     [Route("api/[controller]")]
     [Authorize]
-    public class TaskController(ITaskService taskService) : ControllerBase {
-        private readonly IUserRepository userRepository;
+    public class TaskController(ITaskService taskService, IUserService userService) : ControllerBase {
         // 插入任务（管理员）
         [HttpPost("insert")]
         [Authorize(Roles = "Admin")]
@@ -56,7 +56,6 @@ namespace TaskManage.Controllers
                 return StatusCode(500, e.Message);
             }
         }
-
         // 添加评论（登录用户）
         [HttpPost("comment/add")]
         public async Task<IActionResult> AddComment([FromBody] CommentDto dto)
@@ -73,8 +72,20 @@ namespace TaskManage.Controllers
                 return BadRequest(new { error = "关联的任务不存在" });
 
             var userId = int.Parse(userIdClaim.Value);
-            var user = await userRepository.GetUserByIdAsync(userId);
-            if (user == null) return Unauthorized(new { error = "用户不存在" });
+
+            var userDto = await userService.GetUserInfo(userId);
+            if (userDto == null)
+                return Unauthorized(new { error = "用户不存在" });
+
+            User user;
+            try
+            {
+                user = await userService.GetUserById(userId);
+            }
+            catch (KeyNotFoundException)
+            {
+                return Unauthorized(new { error = "用户不存在" });
+            }
 
             var comment = new Comment
             {
@@ -84,7 +95,6 @@ namespace TaskManage.Controllers
                 CreatedTime = DateTimeOffset.UtcNow
             };
 
-
             try
             {
                 await taskService.AddCommentAsync(comment);
@@ -92,9 +102,11 @@ namespace TaskManage.Controllers
             }
             catch (Exception e)
             {
-                return StatusCode(500, new { error = e.Message});
+                return StatusCode(500, new { error = e.Message });
             }
         }
+
+
 
         // 获取评论（公开）
         [HttpGet("comment/{id:int}")]
