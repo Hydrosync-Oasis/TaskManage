@@ -11,12 +11,10 @@ namespace Application.Services
     public class ProjectService : IProjectService
     {
         private readonly IProjectRepository _projectRepository;
-        private readonly TaskManageDbContext _context;
 
-        public ProjectService(IProjectRepository projectRepository, TaskManageDbContext context)
+        public ProjectService(IProjectRepository projectRepository)
         {
             _projectRepository = projectRepository;
-            _context = context;
         }
 
         public async Task<IEnumerable<ProjectDto>> GetAllAsync()
