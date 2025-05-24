@@ -37,7 +37,7 @@
                   <span>展示任务评论</span>
                 </div>
               </template>
-              <TaskComment :taskId="taskId" />
+              <TaskComment :taskId="selectedTask?.id" />
             </el-collapse-item>
             <el-collapse-item title="制定日期，截止日期" name="1">
               <template #title>
@@ -46,7 +46,7 @@
                   <span>制定日期，截止日期</span>
                 </div>
               </template>
-              <TaskDate />
+              <TaskDate :task="selectedTask" />
             </el-collapse-item>
             <el-collapse-item title="优先级" name="2">
               <template #title>
@@ -55,7 +55,7 @@
                   <span>优先级</span>
                 </div>
               </template>
-              <TaskPriority />
+              <TaskPriority :task="selectedTask" />
             </el-collapse-item>
             <el-collapse-item title="分配人员" name="3">
               <template #title>
@@ -64,7 +64,7 @@
                   <span>分配人员</span>
                 </div>
               </template>
-              <TaskAssignee />
+              <TaskAssignee :task="selectedTask" />
             </el-collapse-item>
             <el-collapse-item title="任务编号" name="4">
               <template #title>
@@ -73,7 +73,7 @@
                   <span>任务编号</span>
                 </div>
               </template>
-              <TaskId />
+              <TaskId :task="selectedTask" />
             </el-collapse-item>
             <el-collapse-item title="前驱节点" name="5">
               <template #title>
@@ -82,7 +82,7 @@
                   <span>前驱节点</span>
                 </div>
               </template>
-              <TaskPredecessor />
+              <TaskPredecessor :task="selectedTask" />
             </el-collapse-item>
             <el-collapse-item title="任务状态" name="6">
               <template #title>
@@ -91,7 +91,7 @@
                   <span>任务状态</span>
                 </div>
               </template>
-              <TaskStatus />
+              <TaskStatus :task="selectedTask" />
             </el-collapse-item>
           </el-collapse>
         </el-col>
@@ -129,7 +129,7 @@
             </div>
           </div>
           <div class="dag-placeholder light-card">
-            <DAGCanvas :tasks="projectTasks" />
+            <DAGCanvas :tasks="projectTasks" @node-click="handleTaskNodeClick" />
           </div>
         </el-col>
         <el-col :span="6" class="right-panel light-card">
@@ -251,6 +251,7 @@ export default {
     const projects = ref([])
     const selectedProject = ref('')
     const currentProject = ref(null)
+    const selectedTask = ref(null)
     const createProjectDialogVisible = ref(false)
     const createProjectForm = ref(null)
     const creating = ref(false)
@@ -433,6 +434,13 @@ export default {
       }
     }
 
+    // 处理任务节点点击事件
+    const handleTaskNodeClick = (task) => {
+      selectedTask.value = task
+      taskId.value = task.id
+      ElMessage.success(`已选择任务: ${task.title}`)
+    }
+
     // 组件挂载时获取项目列表
     onMounted(() => {
       fetchProjects()
@@ -443,8 +451,10 @@ export default {
       projects,
       selectedProject,
       currentProject,
+      selectedTask,
       handleProjectChange,
       handleDeleteProject,
+      handleTaskNodeClick,
       formatDate,
       createProjectDialogVisible,
       createProjectForm,
