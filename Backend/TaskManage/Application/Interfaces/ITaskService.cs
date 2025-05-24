@@ -32,6 +32,8 @@ namespace Application.Interfaces
         public Task<Comment> GetCommentByIdAsync(int id);     // 通过评论ID获取评论
 
         public Task DeleteCommentAsync(int id);               // 通过评论ID删除评论
+
+        public Task<List<Comment>> GetAllCommentsByTaskIdAsync(int taskId);                //通过任务ID获取所有评论
     }
 }
 
