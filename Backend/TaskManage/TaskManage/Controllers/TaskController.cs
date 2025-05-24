@@ -157,5 +157,24 @@ namespace TaskManage.Controllers
                 return StatusCode(500, new { error = e.Message});
             }
         }
+
+        //通过任务ID获取所有评论(登录用户)
+        [HttpGet("comment/task/{taskId:int}")]
+        public async Task<IActionResult> GetCommentsByTaskId(int taskId)
+        {
+            try
+            {
+                var comments = await taskService.GetAllCommentsByTaskIdAsync(taskId);
+                if (comments == null || comments.Count == 0)
+                    return NotFound(new { message = "该任务下暂无评论" });
+
+                return Ok(comments);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { error = ex.Message });
+            }
+        }
+
     }
 }

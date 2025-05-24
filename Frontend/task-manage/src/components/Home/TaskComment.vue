@@ -37,15 +37,15 @@
 </template>
 
 <script setup>
-import { ref, onMounted, watch } from 'vue'
+import { ref, onMounted } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
-import { addTaskComment, getTaskComment, deleteTaskComment } from '@/api/task'
+import request from '@/utils/axios'
 
 /* eslint-disable no-undef */
 const props = defineProps({
   taskId: {
-    type: [Number, String],
-    default: null
+    type: Number,
+    required: true
   }
 })
 /* eslint-enable no-undef */
@@ -69,44 +69,40 @@ const canDeleteComment = (comment) => {
 
 // 获取评论列表
 const fetchComments = async () => {
-  if (!props.taskId) {
-    comments.value = []
-    return
-  }
-  
   try {
-    const response = await getTaskComment(props.taskId)
+    const response = await request({
+      url: `/api/Task/comment/task/${props.taskId}`,
+      method: 'get'
+    })
     comments.value = response.data
   } catch (error) {
-    ElMessage.error('获取评论失败')
+    // 错误已由响应拦截器处理，这里可以添加额外的处理逻辑
     console.error('Failed to fetch comments:', error)
-    comments.value = []
+    comments.value = [] // 确保评论列表为空数组而不是undefined
   }
 }
 
 // 添加评论
 const handleAddComment = async () => {
-  if (!props.taskId) {
-    ElMessage.warning('请先选择一个任务')
-    return
-  }
-  
   if (!newComment.value.trim()) {
     ElMessage.warning('评论内容不能为空')
     return
   }
 
   try {
-    await addTaskComment({
-      taskId: props.taskId,
-      content: newComment.value.trim()
+    await request({
+      url: '/api/Task/comment/add',
+      method: 'post',
+      data: {
+        taskId: props.taskId,
+        content: newComment.value.trim()
+      }
     })
     
     ElMessage.success('评论发表成功')
     newComment.value = ''
     await fetchComments() // 刷新评论列表
   } catch (error) {
-    ElMessage.error('评论发表失败')
     console.error('Failed to add comment:', error)
   }
 }
@@ -120,31 +116,22 @@ const handleDeleteComment = async (commentId) => {
       type: 'warning'
     })
 
-    await deleteTaskComment(commentId)
+    await request({
+      url: `/api/Task/comment/${commentId}`,
+      method: 'delete'
+    })
 
     ElMessage.success('评论删除成功')
     await fetchComments() // 刷新评论列表
   } catch (error) {
     if (error !== 'cancel') {
-      ElMessage.error('评论删除失败')
       console.error('Failed to delete comment:', error)
     }
   }
 }
 
-// 监听任务ID变化，重新获取评论
-watch(() => props.taskId, (newTaskId) => {
-  if (newTaskId) {
-    fetchComments()
-  } else {
-    comments.value = []
-  }
-}, { immediate: true })
-
 onMounted(() => {
-  if (props.taskId) {
-    fetchComments()
-  }
+  fetchComments()
 })
 </script>
 

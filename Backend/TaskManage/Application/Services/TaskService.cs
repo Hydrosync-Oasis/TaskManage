@@ -141,6 +141,13 @@ namespace Application.Services
         {
             return commentRepository.DeleteByCommentIdAsync(id);
         }
+
+        //通过任务ID获取所有评论
+        public async Task<List<Comment>> GetAllCommentsByTaskIdAsync(int taskId)
+        {
+            return await commentRepository.GetAllCommentsByTaskIdAsync(taskId);
+        }
+
     }
 
 
