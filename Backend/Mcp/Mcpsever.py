@@ -1,87 +1,56 @@
-from typing import Any, Optional
-from datetime import datetime, timedelta
-import uuid
+from typing import Any, List, Dict
 from mcp.server.fastmcp import FastMCP
+import datetime
 
-# 初始化MCP服务器
-mcp = FastMCP("project_mgr")
+mcp = FastMCP("project-management")
 
-# 内存数据库
-projects_db = {}
-tasks_db = {}
-
-
-@mcp.tool()
-async def create_project(name: str) -> str:
-   #创建新项目
-
-    project_id = str(uuid.uuid4())
-    projects_db[project_id] = {
-        "id": project_id,
-        "name": name,
-        "created_at": datetime.now().isoformat()
-    }
-    return f"项目'{name}'创建成功，ID: {project_id}"
-
+# 内存模拟数据
+projects: Dict[int, dict] = {}
+tasks: Dict[int, dict] = {}
+meetings: List[dict] = []
 
 @mcp.tool()
-async def create_task(project_id: str, title: str) -> str:
-   #创建新任务
-
-    if project_id not in projects_db:
-        return "错误：项目不存在"
-
-    task_id = str(uuid.uuid4())
-    tasks_db[task_id] = {
-        "id": task_id,
-        "project_id": project_id,
-        "title": title,
-        "status": "待办",
-        "created_at": datetime.now().isoformat()
-    }
-    return f"任务'{title}'创建成功"
-
+async def create_project(name: str, description: str = "") -> str:
+    """创建新项目"""
+    pid = len(projects) + 1
+    projects[pid] = {"id": pid, "name": name, "description": description, "tasks": []}
+    return f"项目已创建: {name} (ID: {pid})"
 
 @mcp.tool()
-async def get_tasks(project_id: str) -> str:
-   #获取项目所有任务
+async def create_task(project_id: int, title: str, deadline: str = "", priority: int = 1, owner: str = "") -> str:
+    """为指定项目创建任务"""
+    if project_id not in projects:
+        return "项目不存在"
+    tid = len(tasks) + 1
+    task = {"id": tid, "title": title, "deadline": deadline, "priority": priority, "owner": owner, "status": "TODO"}
+    tasks[tid] = task
+    projects[project_id]["tasks"].append(tid)
+    return f"任务已创建: {title} (ID: {tid})"
 
-    project_tasks = [t for t in tasks_db.values()
-                     if t["project_id"] == project_id]
+@mcp.tool()
+async def update_task_status(task_id: int, status: str) -> str:
+    """更新任务状态（TODO/DOING/DONE）"""
+    if task_id not in tasks:
+        return "任务不存在"
+    tasks[task_id]["status"] = status
+    return f"任务{task_id}状态已更新为{status}"
 
-    if not project_tasks:
-        return "该项目暂无任务"
+@mcp.tool()
+async def add_meeting_record(project_id: int, content: str) -> str:
+    """添加会议记录"""
+    record = {"project_id": project_id, "content": content, "time": datetime.datetime.now().isoformat()}
+    meetings.append(record)
+    return "会议记录已保存"
 
-    return "\n".join(
-        f"任务ID: {t['id']}\n标题: {t['title']}\n状态: {t['status']}\n"
-        for t in project_tasks
-    )
-
-
-# 辅助函数
-
-def _init_test_data():
-    """初始化测试数据"""
-
-    # 测试项目
-    project_id = str(uuid.uuid4())
-    projects_db[project_id] = {
-        "id": project_id,
-        "name": "演示项目",
-        "created_at": datetime.now().isoformat()
-    }
-
-    # 测试任务
-    tasks_db[str(uuid.uuid4())] = {
-        "id": str(uuid.uuid4()),
-        "project_id": project_id,
-        "title": "初始化项目",
-        "status": "进行中",
-        "created_at": datetime.now().isoformat()
-    }
-
-
+@mcp.tool()
+async def get_project_overview(project_id: int) -> str:
+    """获取项目进度总览"""
+    if project_id not in projects:
+        return "项目不存在"
+    task_ids = projects[project_id]["tasks"]
+    total = len(task_ids)
+    done = sum(1 for tid in task_ids if tasks[tid]["status"] == "DONE")
+    return f"项目{project_id}进度：{done}/{total}已完成"
 
 if __name__ == "__main__":
-    _init_test_data()
     mcp.run(transport="stdio")
