@@ -29,7 +29,7 @@ namespace Application.Interfaces
         //为某个项目添加任务
         Task<TaskDto> AddTaskToProjectAsync(int projectId, TaskDto taskDto);
 
-        //从项目中移除一个任务（如果支持解绑）
+        //从项目中移除一个任务
         Task<bool> RemoveTaskFromProjectAsync(int projectId, int taskId);
     }
 }

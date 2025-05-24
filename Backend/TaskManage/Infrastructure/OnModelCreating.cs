@@ -1,5 +1,4 @@
 ﻿using Domain.Entities;
-using Infrastructure.EntityConfiguration;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Design;
 using Microsoft.Extensions.Configuration;
@@ -8,22 +7,29 @@ using Microsoft.Extensions.Configuration;
 
 namespace Infrastructure
 {
-    public class TaskManageDbContext(DbContextOptions<TaskManageDbContext> options) : DbContext(options) {
+    public class TaskManageDbContext : DbContext
+    {
+        public TaskManageDbContext(DbContextOptions<TaskManageDbContext> options) : base(options)
+        {
+        }
+
         public DbSet<AuditLogs> AuditLogs { get; set; }
         public DbSet<Project> Projects { get; set; }
         public DbSet<User> Users { get; set; }
         public DbSet<Comment> Comments { get; set; }
         public DbSet<TaskNode> TaskNodes { get; set; }
 
-        protected override void OnModelCreating(ModelBuilder modelBuilder) {
+        protected override void OnModelCreating(ModelBuilder modelBuilder)
+        {
             base.OnModelCreating(modelBuilder);
-            modelBuilder.ApplyConfigurationsFromAssembly(this.GetType().Assembly);// 从指定的程序集自动找到所有的配置类
+            modelBuilder.ApplyConfigurationsFromAssembly(this.GetType().Assembly);
             modelBuilder.Entity<Comment>()
                 .HasOne(c => c.Owner)
                 .WithMany(u => u.Comments)
                 .OnDelete(DeleteBehavior.Restrict);
         }
     }
+
 
     /// <summary>
     /// 需要告诉EF core如何传入Options

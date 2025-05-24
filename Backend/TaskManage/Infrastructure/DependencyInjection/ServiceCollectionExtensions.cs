@@ -34,12 +34,6 @@ namespace Infrastructure.DependencyInjection {
             services.AddScoped<IJwtTokenGenerator, JwtTokenGenerator>();
             return services;
         }
-        public static IServiceCollection AddApplicationServices(this IServiceCollection services)
-        {
-            services.AddScoped<IProjectService, ProjectService>();
-        // 其他服务注册...
-            return services;
-        }
-
+        
     }
 }

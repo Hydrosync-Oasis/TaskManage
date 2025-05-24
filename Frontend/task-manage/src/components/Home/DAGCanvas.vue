@@ -1,6 +1,6 @@
 <template>
   <el-card class="dag-card">
-    <VueFlow v-model="elements" class="vue-flow-wrapper">
+    <VueFlow v-model="elements" class="vue-flow-wrapper" @nodeClick="onNodeClick">
       <Background pattern-color="#aaa" gap="8" />
       <Controls />
       <MiniMap />
@@ -30,7 +30,8 @@ export default {
       default: () => []
     }
   },
-  setup(props) {
+  emits: ['node-click'],
+  setup(props, { emit }) {
     const elements = ref([
       // 示例节点和连线，当没有传入tasks时使用
       {
@@ -117,8 +118,24 @@ export default {
       // 没有任务数据时保持默认示例数据
     })
 
+    // 处理节点点击事件
+    const onNodeClick = (event, node) => {
+      // 如果是示例节点，不触发事件
+      if (['1', '2', '3'].includes(node.id)) {
+        return
+      }
+      
+      // 找到对应的任务数据
+      const taskData = props.tasks.find(task => String(task.id) === node.id)
+      if (taskData) {
+        // 向父组件发送点击事件，传递选中的任务数据
+        emit('node-click', taskData)
+      }
+    }
+
     return {
-      elements
+      elements,
+      onNodeClick
     }
   }
 }
