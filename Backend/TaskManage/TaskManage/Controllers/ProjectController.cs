@@ -90,7 +90,7 @@ namespace TaskManage.Controllers
                     return Unauthorized(new { message = "无法识别的用户身份" });
                 }
 
-                dto.OwnerUid = int.Parse(userIdClaim.Value); // 如果是 Guid，改为 Guid.Parse
+                dto.OwnerUid = int.Parse(userIdClaim.Value); 
 
                 var updated = await projectService.UpdateAsync(id, dto);
                 if (updated == null)
