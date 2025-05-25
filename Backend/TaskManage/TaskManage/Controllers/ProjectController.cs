@@ -1,9 +1,11 @@
-using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Authorization;
-using Application.Interfaces;
+using System.Security.Claims;
 using Application.DTOs;
+using Application.Interfaces;
+using Application.Services;
 using Domain.Entities;
 using Mapster;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 
 namespace TaskManage.Controllers
 {
@@ -42,11 +44,27 @@ namespace TaskManage.Controllers
             }
         }
 
+        [Authorize]
         [HttpPost("Create")]
         public async Task<IActionResult> CreateProject([FromBody] ProjectDto dto)
         {
             try
             {
+                // 从当前登录用户的 Claims 中获取用户 ID
+                var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier);
+                if (userIdClaim == null)
+                {
+                    return Unauthorized(new { message = "无法识别用户身份" });
+                }
+
+                if (!int.TryParse(userIdClaim.Value, out var userId))
+                {
+                    return BadRequest(new { message = "无效的用户ID" });
+                }
+
+                // 将用户 ID 设置到 dto.OwnerUid 中
+                dto.OwnerUid = userId;
+
                 var created = await projectService.CreateAsync(dto);
                 return CreatedAtAction(nameof(GetProjectById), new { id = created.Id }, created);
             }
@@ -56,12 +74,24 @@ namespace TaskManage.Controllers
             }
         }
 
+
+
+
         [HttpPut("Update/{id:int}")]
         [Authorize(Roles = "Admin")]
         public async Task<IActionResult> UpdateProject(int id, [FromBody] ProjectDto dto)
         {
             try
             {
+                 // 从 JWT 中获取用户 ID
+                var userIdClaim = HttpContext.User.FindFirst(ClaimTypes.NameIdentifier);
+                if (userIdClaim == null)
+                {
+                    return Unauthorized(new { message = "无法识别的用户身份" });
+                }
+
+                dto.OwnerUid = int.Parse(userIdClaim.Value); // 如果是 Guid，改为 Guid.Parse
+
                 var updated = await projectService.UpdateAsync(id, dto);
                 if (updated == null)
                     return NotFound(new { message = "未找到要更新的项目" });
@@ -74,7 +104,7 @@ namespace TaskManage.Controllers
             }
         }
 
-        [HttpDelete("Delete/{id:int}")]
+    [HttpDelete("Delete/{id:int}")]
         [Authorize(Roles = "Admin")]
         public async Task<IActionResult> DeleteProject(int id)
         {
