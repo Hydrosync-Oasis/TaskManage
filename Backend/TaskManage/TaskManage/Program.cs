@@ -19,6 +19,18 @@ namespace TaskManage {
             builder.Services.AddEndpointsApiExplorer();
             builder.Services.AddSwaggerGen();
 
+            // 注册 CORS 策略
+            builder.Services.AddCors(options =>
+            {
+                options.AddPolicy("AllowAll", policy =>
+                {
+                    policy
+                        .AllowAnyOrigin()      // 允许所有来源（开发环境可以，生产建议指定）
+                        .AllowAnyHeader()      // 允许所有请求头
+                        .AllowAnyMethod();     // 允许所有方法（GET, POST, PUT 等）
+                });
+            });
+
             // 数据库配置
             var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
             builder.Services.AddDbContext<TaskManageDbContext>(options =>
@@ -65,6 +77,8 @@ namespace TaskManage {
             }
 
             app.UseHttpsRedirection();
+
+            app.UseCors("AllowAll");  
 
             app.UseAuthentication();
             app.UseAuthorization();

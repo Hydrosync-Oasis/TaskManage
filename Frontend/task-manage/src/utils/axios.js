@@ -3,6 +3,7 @@ import errorHandler from './errorHandler'
 
 // 创建 axios 实例
 const service = axios.create({
+  baseURL: 'https://localhost:7062', // 后端API基础URL
   timeout: 5000 // 请求超时时间
 })
 
