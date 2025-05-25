@@ -129,7 +129,12 @@
             </div>
           </div>
           <div class="dag-placeholder light-card">
-            <DAGCanvas :tasks="projectTasks" @node-click="handleTaskNodeClick" />
+            <DAGCanvas 
+              :tasks="projectTasks" 
+              :projectId="selectedProject" 
+              @node-click="handleTaskNodeClick" 
+              @task-added="handleTaskAdded"
+            />
           </div>
         </el-col>
         <el-col :span="6" class="right-panel light-card">
@@ -313,16 +318,30 @@ export default {
       if (projectId) {
         selectedProject.value = projectId
         await fetchProjectDetail(projectId)
-        try {
-          const res = await getProjectTasks(projectId)
-          projectTasks.value = res.data
-        } catch (e) {
-          projectTasks.value = []
-        }
+        await fetchProjectTasks(projectId)
       } else {
         selectedProject.value = ''
         currentProject.value = null
         projectTasks.value = []
+      }
+    }
+
+    // 获取项目任务
+    const fetchProjectTasks = async (projectId) => {
+      try {
+        const res = await getProjectTasks(projectId)
+        projectTasks.value = res.data
+      } catch (e) {
+        console.error('获取项目任务失败:', e)
+        projectTasks.value = []
+      }
+    }
+
+    // 处理任务添加事件
+    const handleTaskAdded = async () => {
+      if (selectedProject.value) {
+        await fetchProjectTasks(selectedProject.value)
+        ElMessage.success('任务列表已更新')
       }
     }
 
@@ -468,7 +487,10 @@ export default {
       updating,
       editingProject,
       showUpdateProjectDialog,
-      handleUpdateProject
+      handleUpdateProject,
+      projectTasks,
+      handleTaskAdded,
+      fetchProjectTasks
     }
   }
 }
