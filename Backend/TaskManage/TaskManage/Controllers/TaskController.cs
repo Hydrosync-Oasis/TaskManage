@@ -135,7 +135,8 @@ namespace TaskManage.Controllers
             if (userIdClaim == null)
                 return Unauthorized(new { error = "用户身份无效" });
 
-            int userId = int.Parse(userIdClaim.Value);
+            if (!int.TryParse(userIdClaim.Value, out int userId))
+                return Unauthorized(new { error = "用户身份无效" });
 
             try
             {
@@ -143,20 +144,28 @@ namespace TaskManage.Controllers
                 if (comment == null)
                     return NotFound(new { error = "评论不存在" });
 
-                var roleClaim = User.FindFirst(ClaimTypes.Role);
-                bool isAdmin = roleClaim != null && roleClaim.Value == nameof(UserRole.ProjectAdmin);
+                var user = await userService.GetUserById(userId);
 
-                if (!isAdmin && comment.Owner.Id != userId)
-                    return Forbid("无权删除该评论");
+                // 判断角色权限
+                bool isSystemAdmin = user.UserRole == UserRole.Admin;
+                bool isProjectAdmin = user.UserRole == UserRole.ProjectAdmin;
+
+                bool isOwner = comment.Owner != null && comment.Owner.Id == userId;
+
+                if (!isSystemAdmin && !isProjectAdmin && !isOwner)
+                    return Forbid();
 
                 await taskService.DeleteCommentAsync(id);
+
                 return Ok(new { message = "评论删除成功" });
             }
-            catch (Exception e)
+            catch (Exception ex)
             {
-                return StatusCode(500, new { error = e.Message});
+                return StatusCode(500, new { error = ex.Message });
             }
         }
+
+
 
         //通过任务ID获取所有评论(登录用户)
         [HttpGet("comment/task/{taskId:int}")]
@@ -168,13 +177,25 @@ namespace TaskManage.Controllers
                 if (comments == null || comments.Count == 0)
                     return NotFound(new { message = "该任务下暂无评论" });
 
-                return Ok(comments);
+                // 映射 Comment 实体到 CommentDto，包含 CreatedTime
+                var commentDtos = comments.Select(c => new CommentDto
+                {
+                    CommentId = c.Id,
+                    TaskId = c.Task.Id,
+                    UserId = c.Owner.Id,
+                    Content = c.Content,
+                    CreatedTime = c.CreatedTime  // 这里加上创建时间
+                }).ToList();
+
+                return Ok(commentDtos);
             }
             catch (Exception ex)
             {
                 return StatusCode(500, new { error = ex.Message });
             }
         }
+
+
 
     }
 }

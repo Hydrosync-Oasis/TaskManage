@@ -7,5 +7,6 @@ namespace Application.Dtos
         public int TaskId { get; set; }                 // 所属任务 ID
         public int UserId { get; set; }                 // 评论人 ID（可由后端自动注入）
         public string Content { get; set; } = null!;    // 评论内容
+        public DateTimeOffset CreatedTime { get; set; }  // 新增创建时间
     }
 }
