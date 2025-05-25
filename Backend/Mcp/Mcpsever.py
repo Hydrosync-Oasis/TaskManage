@@ -44,7 +44,7 @@ async def add_meeting_record(project_id: int, content: str) -> str:
 
 @mcp.tool()
 async def get_project_overview(project_id: int) -> str:
-    """获取项目进度总览"""
+    """获取项目放进度总览"""
     if project_id not in projects:
         return "项目不存在"
     task_ids = projects[project_id]["tasks"]

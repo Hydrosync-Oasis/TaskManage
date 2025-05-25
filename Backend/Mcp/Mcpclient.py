@@ -91,4 +91,4 @@ async def main(query: str):
     await client.cleanup()
 
 if __name__ == "__main__":
-    asyncio.run(main("什么是马克思主义"))
+    asyncio.run(main(""))
