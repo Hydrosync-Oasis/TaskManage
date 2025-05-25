@@ -4,6 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using Application.DTOs;
+using Domain.Entities;
 
 namespace Application.Interfaces
 {
@@ -12,5 +13,6 @@ namespace Application.Interfaces
         public Task Register(string username, string password);
         public Task<LoginResultDto> Login(string username, string password);
         public Task<UserDto> GetUserInfo(int id);
+        public Task<User> GetUserById(int id);
     }
 }

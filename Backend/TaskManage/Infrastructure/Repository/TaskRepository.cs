@@ -32,24 +32,37 @@ namespace Infrastructure.Repository {
             return dbContext.TaskNodes.Where(x => x.TaskStatus == status).ToListAsync();
         }
 
-        public async Task<List<Comment>> GetAllCommentsByTaskIdAsync(int id) {
-            var task = await dbContext.TaskNodes.Include(x => x.Comments).FirstOrDefaultAsync(x => x.Id == id);
-            ArgumentNullException.ThrowIfNull(task);
-            return task.Comments;
-        }
-
-        public async Task DeleteByCommentIdAsync(int id) {
-            var task = await dbContext.TaskNodes.Include(x => x.Comments).FirstOrDefaultAsync(x=>x.Id == id);
-            ArgumentNullException.ThrowIfNull(task);
-            dbContext.Comments.Remove(task.Comments.First(x => x.Id == id));
-        }
-
-        public async Task AddAsync(Comment comment) {
-            await dbContext.Comments.AddAsync(comment);
-        }
-
+       
         public Task<List<TaskNode>> GetAllTasksByProjectId(int projectId) {
             return dbContext.TaskNodes.Include(x=>x.DependentNodes).Where(x => x.Project.Id == projectId).ToListAsync();
+        }
+
+
+        //实现 ITaskRepository 的接口要求
+        public async Task<IEnumerable<TaskNode>> GetTasksByProjectIdAsync(int projectId)
+        {
+            return await dbContext.TaskNodes
+                .Where(t => t.ProjectId == projectId)
+                .ToListAsync();
+        }
+
+        public async Task<TaskNode> AddTaskToProjectAsync(TaskNode task)
+        {
+            dbContext.TaskNodes.Add(task);
+            await dbContext.SaveChangesAsync();
+            return task;
+        }
+
+        public async Task<bool> RemoveTaskFromProjectAsync(int projectId, int taskId)
+        {
+            var task = await dbContext.TaskNodes
+                .FirstOrDefaultAsync(t => t.ProjectId == projectId && t.Id == taskId);
+
+            if (task == null) return false;
+
+            dbContext.TaskNodes.Remove(task);
+            await dbContext.SaveChangesAsync();
+            return true;
         }
     }
 }

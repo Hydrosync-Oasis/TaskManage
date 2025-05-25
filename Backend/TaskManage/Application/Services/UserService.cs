@@ -61,5 +61,13 @@ namespace Application.Services {
                 Role = u.UserRole
             };
         }
+
+        public async Task<User> GetUserById(int id)
+        {
+            var user = await userRepository.GetUserByIdAsync(id);
+            if (user == null)
+                throw new KeyNotFoundException($"未找到ID为 {id} 的用户");
+            return user;
+        }
     }
 }
