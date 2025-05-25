@@ -11,7 +11,7 @@ namespace TaskManage.Controllers
     [Route("api/[controller]")]
     [Authorize] // 登录用户才能访问所有接口
     public class ProjectController(IProjectService projectService) : ControllerBase {
-        [HttpGet]
+        [HttpGet("AllProjects")]
         public async Task<IActionResult> GetAllProjects()
         {
             try
@@ -42,7 +42,7 @@ namespace TaskManage.Controllers
             }
         }
 
-        [HttpPost]
+        [HttpPost("Create")]
         public async Task<IActionResult> CreateProject([FromBody] ProjectDto dto)
         {
             try
@@ -56,7 +56,7 @@ namespace TaskManage.Controllers
             }
         }
 
-        [HttpPut("{id:int}")]
+        [HttpPut("Update/{id:int}")]
         [Authorize(Roles = "Admin")]
         public async Task<IActionResult> UpdateProject(int id, [FromBody] ProjectDto dto)
         {
@@ -74,7 +74,7 @@ namespace TaskManage.Controllers
             }
         }
 
-        [HttpDelete("{id:int}")]
+        [HttpDelete("Delete/{id:int}")]
         [Authorize(Roles = "Admin")]
         public async Task<IActionResult> DeleteProject(int id)
         {
@@ -93,7 +93,7 @@ namespace TaskManage.Controllers
         }
 
         // 新增接口：根据项目id获取任务列表
-        [HttpGet("{id:int}/tasks")]
+        [HttpGet("{id:int}/Tasks")]
         public async Task<ActionResult<List<TaskNode>>> GetTasksForProject(int id)
         {
             try

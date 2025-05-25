@@ -16,7 +16,7 @@ namespace TaskManage.Controllers
     [Authorize]
     public class TaskController(ITaskService taskService, IUserService userService) : ControllerBase {
         // 插入任务（管理员）
-        [HttpPost("insert")]
+        [HttpPost("Add")]
         [Authorize(Roles = "Admin")]
         public async Task<ActionResult> InsertTask([FromBody] TaskDto? dto)
         {
@@ -35,7 +35,7 @@ namespace TaskManage.Controllers
         }
 
         // 更新任务（创建人）
-        [HttpPost("update")]
+        [HttpPut("Update")]
         public async Task<ActionResult> Update([FromBody] TaskDto dto)
         {
             try {
@@ -57,7 +57,7 @@ namespace TaskManage.Controllers
             }
         }
         // 添加评论（登录用户）
-        [HttpPost("comment/add")]
+        [HttpPost("/api/Comment/Add")]
         public async Task<IActionResult> AddComment([FromBody] CommentDto dto)
         {
             var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier);
@@ -109,7 +109,7 @@ namespace TaskManage.Controllers
 
 
         // 获取评论（公开）
-        [HttpGet("comment/{id:int}")]
+        [HttpGet("/api/Comment/{id:int}")]
         [AllowAnonymous]
         public async Task<IActionResult> GetComment(int id)
         {
@@ -128,7 +128,7 @@ namespace TaskManage.Controllers
         }
 
         // 删除评论（管理员或本人）
-        [HttpDelete("comment/{id:int}")]
+        [HttpDelete("/api/Comment/Delete/{id:int}")]
         public async Task<IActionResult> DeleteComment(int id)
         {
             var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier);
@@ -159,7 +159,7 @@ namespace TaskManage.Controllers
         }
 
         //通过任务ID获取所有评论(登录用户)
-        [HttpGet("comment/task/{taskId:int}")]
+        [HttpGet("{taskId:int}/Comments")]
         public async Task<IActionResult> GetCommentsByTaskId(int taskId)
         {
             try
