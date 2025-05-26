@@ -10,9 +10,22 @@ namespace Application.Interfaces
 {
     public interface IUserService
     {
-        public Task Register(string username, string password);
-        public Task<LoginResultDto> Login(string username, string password);
-        public Task<UserDto> GetUserInfo(int id);
-        public Task<User> GetUserById(int id);
+        // 用户注册
+        Task Register(string username, string password);
+
+        // 用户登录
+        Task<LoginResultDto> Login(string username, string password);
+
+        // 获取用户信息（用于展示）
+        Task<UserDto> GetUserInfo(int id);
+
+        // 获取完整 User 实体（内部使用）
+        Task<User> GetUserById(int id);
+
+        // 超级管理员添加用户（带角色、激活状态）
+        Task<UserDto> CreateUserAsync(UserDto dto);
+
+        // 设置用户状态（激活/停用）
+        Task<bool> SetUserActiveStatusAsync(int userId, bool isActive);
     }
 }

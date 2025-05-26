@@ -69,5 +69,42 @@ namespace Application.Services {
                 throw new KeyNotFoundException($"未找到ID为 {id} 的用户");
             return user;
         }
+        public async Task<UserDto> CreateUserAsync(UserDto userDto)
+        {
+            var existing = await userRepository.GetUserByUsernameAsync(userDto.Username);
+            if (existing != null)
+                throw new InvalidOperationException("用户名已存在");
+
+            var user = new User
+            {
+                UserName = userDto.Username,
+                PasswordHash = BCrypt.Net.BCrypt.HashPassword(userDto.Password), // 确保 UserDto 中有 Password 字段
+                CreatedAt = DateTimeOffset.UtcNow,
+                UserRole = userDto.Role,
+                IsActive = true
+            };
+
+            await userRepository.AddUserAsync(user);
+
+            return new UserDto
+            {
+                Id = user.Id,
+                Username = user.UserName,
+                AvatarUrl = user.AvatarUrl,
+                Role = user.UserRole
+            };
+        }
+
+        // 管理员设置用户激活/禁用状态
+        public async Task<bool> SetUserActiveStatusAsync(int userId, bool isActive)
+        {
+            var user = await userRepository.GetUserByIdAsync(userId);
+            if (user == null)
+                throw new KeyNotFoundException($"未找到ID为 {userId} 的用户");
+
+            user.IsActive = isActive;
+            await userRepository.UpdateUserAsync(user);
+            return true;
+        }
     }
 }

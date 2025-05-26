@@ -26,6 +26,7 @@ namespace Application.DTOs
     {
         public int Id { get; set; }
         public string Username { get; set; } = null!;
+        public string Password { get; set; } = null!;
         public string? Email { get; set; }
         public string? AvatarUrl { get; set; }
         public required UserRole Role { get; set; }
