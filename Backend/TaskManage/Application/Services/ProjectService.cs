@@ -8,39 +8,31 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Application.Services
 {
-    public class ProjectService : IProjectService
-    {
-        private readonly IProjectRepository _projectRepository;
-        private readonly ITaskRepository _taskRepository;
-
-        public ProjectService(IProjectRepository projectRepository, ITaskRepository taskRepository)
-        {
-            _projectRepository = projectRepository;
-            _taskRepository = taskRepository;
-        }
-
+    public class ProjectService(IProjectRepository projectRepository, ITaskRepository taskRepository)
+        : IProjectService {
         public async Task<IEnumerable<ProjectDto>> GetAllAsync()
         {
-            var projects = await _projectRepository.GetAllProjectsAsync();
+            var projects = await projectRepository.GetAllProjectsAsync();
             return projects.Adapt<IEnumerable<ProjectDto>>();
         }
 
         public async Task<ProjectDto?> GetByIdAsync(int id)
         {
-            var project = await _projectRepository.GetProjectByIdAsync(id);
+            var project = await projectRepository.GetProjectByIdAsync(id);
             return project?.Adapt<ProjectDto>();
         }
 
         public async Task<ProjectDto> CreateAsync(ProjectDto dto)
         {
             var entity = dto.Adapt<Project>();
-            var created = await _projectRepository.CreateProjectAsync(entity);
+            entity.OwnerId = dto.OwnerUid!.Value;
+            var created = await projectRepository.CreateProjectAsync(entity);
             return created.Adapt<ProjectDto>();
         }
 
         public async Task<ProjectDto?> UpdateAsync(int id, ProjectDto dto)
         {
-            var proj = await _projectRepository.GetProjectByIdAsync(id);
+            var proj = await projectRepository.GetProjectByIdAsync(id);
             if (proj == null) return null;
 
             if (dto.Description is not null)
@@ -55,22 +47,22 @@ namespace Application.Services
             if (dto.CreatedAt is not null)
                 throw new ArgumentException("不能更改创建时间");
 
-            await _projectRepository.UpdateProjectInfoAsync(proj);
+            await projectRepository.UpdateProjectInfoAsync(proj);
             return proj.Adapt<ProjectDto>();
         }
 
         public async Task<bool> DeleteAsync(int id)
         {
-            var project = await _projectRepository.GetProjectByIdAsync(id);
+            var project = await projectRepository.GetProjectByIdAsync(id);
             if (project == null) return false;
 
-            await _projectRepository.DeleteProjectAsync(id);
+            await projectRepository.DeleteProjectAsync(id);
             return true;
         }
 
         public async Task<IEnumerable<TaskDto>> GetTasksByProjectIdAsync(int projectId)
         {
-            var tasks = await _taskRepository.GetTasksByProjectIdAsync(projectId);
+            var tasks = await taskRepository.GetTasksByProjectIdAsync(projectId);
             return tasks.Adapt<IEnumerable<TaskDto>>();
         }
 
@@ -78,13 +70,13 @@ namespace Application.Services
         {
             var task = taskDto.Adapt<TaskNode>();
             task.ProjectId = projectId;
-            var added = await _taskRepository.AddTaskToProjectAsync(task);
+            var added = await taskRepository.AddTaskToProjectAsync(task);
             return added.Adapt<TaskDto>();
         }
 
         public async Task<bool> RemoveTaskFromProjectAsync(int projectId, int taskId)
         {
-            return await _taskRepository.RemoveTaskFromProjectAsync(projectId, taskId);
+            return await taskRepository.RemoveTaskFromProjectAsync(projectId, taskId);
         }
 
     }

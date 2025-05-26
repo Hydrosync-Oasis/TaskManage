@@ -13,6 +13,7 @@ namespace Domain.Entities
         public string? Description { get; set; }
 
         public required User Owner { get; set; }
+        public required int OwnerId { get; set; }
         public DateTimeOffset CreatedAt { get; set; }
         public List<TaskNode> Tasks { get; set; } = [];
     }

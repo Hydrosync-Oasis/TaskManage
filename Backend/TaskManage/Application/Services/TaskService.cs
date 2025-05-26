@@ -6,19 +6,11 @@ using Mapster;
 
 namespace Application.Services
 {
-    public class TaskService : ITaskService
-    {
-        private readonly ITaskRepository taskRepository;
-        private readonly IUserRepository userRepository;
-        private readonly ICommentRepository commentRepository;
-
-        public TaskService(ITaskRepository taskRepository, IUserRepository userRepository, ICommentRepository commentRepository)
-        {
-            this.taskRepository = taskRepository;
-            this.userRepository = userRepository;
-            this.commentRepository = commentRepository;
-        }
-
+    public class TaskService(
+        ITaskRepository taskRepository,
+        IUserRepository userRepository,
+        ICommentRepository commentRepository)
+        : ITaskService {
         public async Task UpdateTask(TaskDto dto)
         {
             if (dto.Id == null) throw new ArgumentNullException(nameof(dto.Id));
@@ -129,11 +121,11 @@ namespace Application.Services
             return commentRepository.AddAsync(comment);
         }
 
-        public async Task<Comment> GetCommentByIdAsync(int id)
+        public async Task<Comment?> GetCommentByIdAsync(int id)
         {
             var comments = await commentRepository.GetAllCommentsByTaskIdAsync(id);
             var comment = comments.FirstOrDefault(c => c.Id == id);
-            return comment ?? throw new Exception($"找不到 ID 为 {id} 的评论");
+            return comment;
         }
 
 

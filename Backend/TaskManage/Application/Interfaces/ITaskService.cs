@@ -29,7 +29,7 @@ namespace Application.Interfaces
 
         public Task AddCommentAsync(Comment comment);         // 添加评论（仍需 Comment 对象）
 
-        public Task<Comment> GetCommentByIdAsync(int id);     // 通过评论ID获取评论
+        public Task<Comment?> GetCommentByIdAsync(int id);     // 通过评论ID获取评论
 
         public Task DeleteCommentAsync(int id);               // 通过评论ID删除评论
 
