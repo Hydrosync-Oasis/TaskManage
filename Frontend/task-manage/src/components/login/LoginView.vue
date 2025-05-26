@@ -34,9 +34,9 @@
 import {onMounted, ref} from 'vue'
 import Login from './Login.vue';
 import Register from "@/components/login/Register.vue";
-import axios from 'axios';
 import {useRoute, useRouter} from "vue-router";
 import {ElMessage} from 'element-plus';
+import { login, register } from '@/api/user';
 
 let props = defineProps({
   error: String,
@@ -66,7 +66,7 @@ const handleLoginRegister = () => {
 }
 
 const onRegister = (form) => {
-  axios.post('https://localhost:7062/User/Register', {
+  register({
     username: form.username,
     password: form.password,
   }).then((res) => {
@@ -75,7 +75,7 @@ const onRegister = (form) => {
             message: '注册成功，请登录',
             type: 'success'
           });
-          title.value = '注册';
+          title.value = '登录';
         } else {
           ElMessage({
             message: res.data,
@@ -84,16 +84,14 @@ const onRegister = (form) => {
         }
       }
   )
-      .catch((reason) => {
-        ElMessage({
-          message: reason.response.data,
-          type: "error"
-        })
-      })
+  .catch((error) => {
+    // 错误处理已在axios拦截器中完成
+    console.log('注册失败', error);
+  })
 }
 
 const onLogin = (form) => {
-  axios.post('https://localhost:7062/User/Login', {
+  login({
     username: form.username,
     password: form.password,
   }).then((res) => {
@@ -107,12 +105,10 @@ const onLogin = (form) => {
         }
       }
   )
-      .catch((reason) => {
-        ElMessage({
-          message: reason.response.data,
-          type: "error"
-        })
-      })
+  .catch((error) => {
+    // 错误处理已在axios拦截器中完成
+    console.log('登录失败', error);
+  })
 }
 
 const onForgotPassword = () => {
