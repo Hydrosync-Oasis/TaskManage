@@ -3,6 +3,7 @@ using Application.Interfaces;
 using Application.Services;
 using Infrastructure.Auth;
 using Infrastructure.Repository;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace TaskManage.Controllers {
@@ -46,6 +47,18 @@ namespace TaskManage.Controllers {
             }
 
             return Ok(userDto);
+        }
+
+        /// <summary>
+        /// 验证用户信息是否有效
+        /// </summary>
+        /// <returns></returns>
+        [HttpGet]
+        [Authorize]
+        public IActionResult Auth() {
+            return Ok(new {
+                message = "用户已登录"
+            });
         }
     }
 }

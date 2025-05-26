@@ -51,33 +51,15 @@ namespace Application.Services
             return proj.Adapt<ProjectDto>();
         }
 
-        public async Task<bool> DeleteAsync(int id)
+        public Task DeleteAsync(int id)
         {
-            var project = await projectRepository.GetProjectByIdAsync(id);
-            if (project == null) return false;
-
-            await projectRepository.DeleteProjectAsync(id);
-            return true;
+            return projectRepository.DeleteProjectAsync(id);
         }
 
-        public async Task<IEnumerable<TaskDto>> GetTasksByProjectIdAsync(int projectId)
+        public async Task<List<TaskDto>> GetTasksByProjectIdAsync(int projectId)
         {
             var tasks = await taskRepository.GetTasksByProjectIdAsync(projectId);
-            return tasks.Adapt<IEnumerable<TaskDto>>();
+            return tasks.Adapt<List<TaskDto>>();
         }
-
-        public async Task<TaskDto> AddTaskToProjectAsync(int projectId, TaskDto taskDto)
-        {
-            var task = taskDto.Adapt<TaskNode>();
-            task.ProjectId = projectId;
-            var added = await taskRepository.AddTaskToProjectAsync(task);
-            return added.Adapt<TaskDto>();
-        }
-
-        public async Task<bool> RemoveTaskFromProjectAsync(int projectId, int taskId)
-        {
-            return await taskRepository.RemoveTaskFromProjectAsync(projectId, taskId);
-        }
-
     }
 }

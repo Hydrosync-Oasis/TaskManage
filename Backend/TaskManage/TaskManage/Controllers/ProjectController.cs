@@ -27,7 +27,7 @@ namespace TaskManage.Controllers
             }
         }
 
-        [HttpGet("{id}")]
+        [HttpGet("{id:int}")]
         public async Task<IActionResult> GetProjectById(int id)
         {
             try
@@ -74,9 +74,6 @@ namespace TaskManage.Controllers
             }
         }
 
-
-
-
         [HttpPut("Update/{id:int}")]
         [Authorize(Roles = "Admin")]
         public async Task<IActionResult> UpdateProject(int id, [FromBody] ProjectDto dto)
@@ -104,17 +101,16 @@ namespace TaskManage.Controllers
             }
         }
 
-    [HttpDelete("Delete/{id:int}")]
+        [HttpDelete("Delete/{id:int}")]
         [Authorize(Roles = "Admin")]
         public async Task<IActionResult> DeleteProject(int id)
         {
-            try
-            {
-                var deleted = await projectService.DeleteAsync(id);
-                if (!deleted)
-                    return NotFound(new { message = "未找到要删除的项目" });
+            try {
+                await projectService.DeleteAsync(id);
 
                 return NoContent();
+            } catch (ArgumentOutOfRangeException ex) {
+                return NotFound(new { error = ex.Message });
             }
             catch (Exception ex)
             {
