@@ -11,7 +11,7 @@ namespace Domain.Repository {
 
         Task<List<TaskNode>> GetTasksByStatus(TaskStatus  status);
 
-        Task<IEnumerable<TaskNode>> GetTasksByProjectIdAsync(int projectId);
+        Task<List<TaskNode>> GetTasksByProjectIdAsync(int projectId);
         Task<TaskNode> AddTaskToProjectAsync(TaskNode task);
         Task<bool> RemoveTaskFromProjectAsync(int projectId, int taskId);
 

@@ -25,7 +25,9 @@ namespace Infrastructure.Repository
         public async Task DeleteProjectAsync(int id)
         {
             var proj = await dbContext.Projects.FirstOrDefaultAsync(x => x.Id == id);
-            ArgumentNullException.ThrowIfNull(proj);
+            if (proj is null) {
+                throw new ArgumentOutOfRangeException(nameof(id), "没有该id的项目");
+            }
             dbContext.Projects.Remove(proj);
             await dbContext.SaveChangesAsync(); // ✅ 添加保存
         }

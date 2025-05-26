@@ -6,7 +6,10 @@ namespace Infrastructure.Repository {
     public class CommentRepository(TaskManageDbContext dbContext) : ICommentRepository {
         public async Task<List<Comment>> GetAllCommentsByTaskIdAsync(int id) {
             var task = await dbContext.TaskNodes.Include(x => x.Comments).FirstOrDefaultAsync(x => x.Id == id);
-            ArgumentNullException.ThrowIfNull(task);
+            if (task == null) {
+                throw new KeyNotFoundException("找不到该task");
+            }
+
             return task.Comments;
         }
 

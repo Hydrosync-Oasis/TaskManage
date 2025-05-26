@@ -22,14 +22,8 @@ namespace Application.Interfaces
         Task<ProjectDto?> UpdateAsync(int id, ProjectDto dto);
 
         // 删除项目（返回是否成功）
-        Task<bool> DeleteAsync(int id);
+        Task DeleteAsync(int id);
         //获取某个项目下的所有任务
-        Task<IEnumerable<TaskDto>> GetTasksByProjectIdAsync(int projectId);
-
-        //为某个项目添加任务
-        Task<TaskDto> AddTaskToProjectAsync(int projectId, TaskDto taskDto);
-
-        //从项目中移除一个任务
-        Task<bool> RemoveTaskFromProjectAsync(int projectId, int taskId);
+        Task<List<TaskDto>> GetTasksByProjectIdAsync(int projectId);
     }
 }

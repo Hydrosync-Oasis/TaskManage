@@ -50,9 +50,27 @@ namespace TaskManage.Controllers
         }
 
         [HttpGet("User/{uid:int}")]
-        public async Task<UserDto> QueryUser(int uid)
-        {
-            return await userService.GetUserInfo(uid);
+        public async Task<IActionResult> QueryUser(int uid) {
+            var userDto = await userService.GetUserInfo(uid);
+            if (userDto is null) {
+                return NotFound(new {
+                    Error = $"找不到uid={uid}的用户"
+                });
+            }
+
+            return Ok(userDto);
+        }
+
+        /// <summary>
+        /// 验证用户信息是否有效
+        /// </summary>
+        /// <returns></returns>
+        [HttpGet]
+        [Authorize]
+        public IActionResult Auth() {
+            return Ok(new {
+                message = "用户已登录"
+            });
         }
 
         [HttpPost]

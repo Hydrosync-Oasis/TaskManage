@@ -39,11 +39,10 @@ namespace Infrastructure.Repository {
 
 
         //实现 ITaskRepository 的接口要求
-        public async Task<IEnumerable<TaskNode>> GetTasksByProjectIdAsync(int projectId)
-        {
-            return await dbContext.TaskNodes
-                .Where(t => t.ProjectId == projectId)
-                .ToListAsync();
+        public async Task<List<TaskNode>> GetTasksByProjectIdAsync(int projectId) {
+            var proj = await dbContext.TaskNodes
+                .Where(t => t.ProjectId == projectId).ToListAsync();
+            return proj ?? throw new ArgumentOutOfRangeException(nameof(projectId), "不存在该id所指的项目");
         }
 
         public async Task<TaskNode> AddTaskToProjectAsync(TaskNode task)
