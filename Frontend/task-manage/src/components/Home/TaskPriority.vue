@@ -37,6 +37,7 @@
 import { ref, watch } from 'vue'
 import { ElMessage } from 'element-plus'
 import { updateTask } from '@/api/task'
+import { getUserIdFromToken, getUserRoleFromToken } from '@/utils/jwtUtils'
 
 /* eslint-disable no-undef */
 const props = defineProps({
@@ -80,10 +81,10 @@ watch(() => props.task, (newTask) => {
     priority.value = newTask.priority || 0
     newPriority.value = newTask.priority || 0
     
-    // 检查是否有权限更新优先级（这里可以根据实际权限逻辑调整）
-    const currentUserId = localStorage.getItem('userId')
+    // 检查是否有权限更新优先级
+    const currentUserId = getUserIdFromToken()
     canUpdatePriority.value = newTask.createUserId === parseInt(currentUserId) || 
-                             localStorage.getItem('userRole') === 'ProjectAdmin'
+                             getUserRoleFromToken() === 'ProjectAdmin'
   } else {
     priority.value = 0
     newPriority.value = 0
@@ -131,4 +132,4 @@ watch(() => props.task, (newTask) => {
   padding: 20px 0;
   font-style: italic;
 }
-</style> 
+</style>
