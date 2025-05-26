@@ -48,6 +48,7 @@
 import { ref, onMounted } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { addTaskComment, deleteTaskComment, getTaskComments } from '@/api/task'
+import { getUserIdFromToken, getUserRoleFromToken } from '@/utils/jwtUtils'
 
 /* eslint-disable no-undef */
 const props = defineProps({
@@ -70,8 +71,9 @@ const formatTime = (time) => {
 
 // 检查是否可以删除评论
 const canDeleteComment = (comment) => {
-  const currentUserId = localStorage.getItem('userId')
-  const userRole = localStorage.getItem('userRole')
+  // 使用JWT工具函数获取用户ID和角色
+  const currentUserId = getUserIdFromToken()
+  const userRole = getUserRoleFromToken()
   return userRole === 'ProjectAdmin' || comment.owner?.id === parseInt(currentUserId)
 }
 

@@ -1,7 +1,7 @@
 import { createRouter, createWebHashHistory } from 'vue-router'
 import Login from '../components/login/LoginView.vue'
 import Home from '../components/Home/HomeView.vue'
-
+import { verifyToken } from '../api/user'
 
 const router = createRouter({
     history: createWebHashHistory(),
@@ -22,18 +22,38 @@ const router = createRouter({
     ]
 });
 
-router.beforeEach((to, from) => {
+router.beforeEach(async (to, from) => {
     if (to.name !== 'Login') {
-        if (!localStorage.getItem('token')) {
-            return { 
-                path: '/Login',
+        // 检查是否有token
+        const token = localStorage.getItem('token')
+        if (!token) {
+            return {
+                path: '/login',
                 query: {
                     error: true,
-                    source: from.path
+                    source: to.fullPath
+                }
+            };
+        }
+        
+        try {
+            // 验证token是否有效
+            await verifyToken()
+            // token有效，继续导航
+            return true
+        } catch (error) {
+            // token无效，清除本地token并跳转到登录页
+            localStorage.removeItem('token')
+            return {
+                path: '/login',
+                query: {
+                    error: true,
+                    source: to.fullPath
                 }
             };
         }
     }
+    return true
 })
 
-export default router;
+export default router
