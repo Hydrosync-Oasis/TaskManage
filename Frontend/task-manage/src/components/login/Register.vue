@@ -61,7 +61,7 @@ const formRules = reactive({
       if (!value) {
         return callback(new Error('用户名不能是空。'));
       }
-      const regex = /^(?=.*[A-Za-z])(?=.*\d)[A-Za-z\d]{3,18}$/;
+      const regex = /^[A-Za-z\d]{3,18}$/;
       const res = regex.test(value);
 
       if (!res) return callback(new Error('必须是3-18位数字加字母'))

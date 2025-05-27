@@ -150,7 +150,7 @@ namespace TaskManage.Controllers
                 bool isSystemAdmin = user.UserRole == UserRole.Admin;
                 bool isProjectAdmin = user.UserRole == UserRole.ProjectAdmin;
 
-                bool isOwner = comment.Owner != null && comment.Owner.Id == userId;
+                bool isOwner = comment.Owner.Id == userId;
 
                 if (!isSystemAdmin && !isProjectAdmin && !isOwner)
                     return Forbid();
@@ -174,7 +174,7 @@ namespace TaskManage.Controllers
             try
             {
                 var comments = await taskService.GetAllCommentsByTaskIdAsync(taskId);
-                if (comments == null || comments.Count == 0)
+                if (comments.Count == 0)
                     return NotFound(new { message = "该任务下暂无评论" });
 
                 // 映射 Comment 实体到 CommentDto，包含 CreatedTime
@@ -199,20 +199,15 @@ namespace TaskManage.Controllers
         [HttpGet("Info/{id:int}")]
         public async Task<IActionResult> GetTaskInfo(int id)
         {
-            try
-            {
+            try {
                 var taskDto = await taskService.GetTaskInfo(id);
-                if (taskDto == null)
-                    return NotFound(new { error = "任务不存在" });
-
                 return Ok(taskDto);
-            }
-            catch (Exception ex)
-            {
+            } catch (KeyNotFoundException ex) {
+                return NotFound(new { error = ex.Message});
+            } catch (Exception ex) {
                 return StatusCode(500, new { error = ex.Message });
             }
         }
-
 
     }
 }

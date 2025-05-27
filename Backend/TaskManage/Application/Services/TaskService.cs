@@ -81,7 +81,7 @@ namespace Application.Services
         /// <param name="dto">任务节点DTO</param>
         /// <param name="uid">创建用户时的用户id</param>
         /// <returns></returns>
-        /// <exception cref="ArgumentNullException">若DTO部分信息为空，抛出异常</exception>
+        /// <exception cref="ArgumentNullException">若DTO</exception>
         public async Task<int> AddTask(TaskDto dto, int uid)
         {
             if (dto.ProjectId == null) throw new ArgumentNullException(nameof(dto.ProjectId));
@@ -115,6 +115,9 @@ namespace Application.Services
         public async Task<TaskDto> GetTaskInfo(int taskId)
         {
             var taskNode = await taskRepository.GetNodeById(taskId);
+            if (taskNode is null) {
+                throw new KeyNotFoundException($"没有{taskId}对应的任务");
+            }
             return taskNode.Adapt<TaskDto>();
         }
 
