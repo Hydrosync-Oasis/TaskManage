@@ -150,7 +150,7 @@ namespace TaskManage.Controllers
                 bool isSystemAdmin = user.UserRole == UserRole.Admin;
                 bool isProjectAdmin = user.UserRole == UserRole.ProjectAdmin;
 
-                bool isOwner = comment.Owner.Id == userId;
+                bool isOwner = comment.Owner != null && comment.Owner.Id == userId;
 
                 if (!isSystemAdmin && !isProjectAdmin && !isOwner)
                     return Forbid();
@@ -171,23 +171,23 @@ namespace TaskManage.Controllers
         [HttpGet("{taskId:int}/Comments")]
         public async Task<IActionResult> GetCommentsByTaskId(int taskId)
         {
-            try {
+            try
+            {
                 var comments = await taskService.GetAllCommentsByTaskIdAsync(taskId);
+                if (comments == null || comments.Count == 0)
+                    return NotFound(new { message = "该任务下暂无评论" });
 
                 // 映射 Comment 实体到 CommentDto，包含 CreatedTime
-                var commentDtos = comments.Select(c => new CommentDto {
+                var commentDtos = comments.Select(c => new CommentDto
+                {
                     CommentId = c.Id,
                     TaskId = c.Task.Id,
                     UserId = c.Owner.Id,
                     Content = c.Content,
-                    CreatedTime = c.CreatedTime // 这里加上创建时间
+                    CreatedTime = c.CreatedTime  // 这里加上创建时间
                 }).ToList();
 
                 return Ok(commentDtos);
-            } catch (KeyNotFoundException ex) {
-                return NotFound(new {
-                    error = ex.Message
-                });
             }
             catch (Exception ex)
             {
@@ -195,6 +195,23 @@ namespace TaskManage.Controllers
             }
         }
 
+        // 获取任务信息（任意登录用户）
+        [HttpGet("Info/{id:int}")]
+        public async Task<IActionResult> GetTaskInfo(int id)
+        {
+            try
+            {
+                var taskDto = await taskService.GetTaskInfo(id);
+                if (taskDto == null)
+                    return NotFound(new { error = "任务不存在" });
+
+                return Ok(taskDto);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { error = ex.Message });
+            }
+        }
 
 
     }
