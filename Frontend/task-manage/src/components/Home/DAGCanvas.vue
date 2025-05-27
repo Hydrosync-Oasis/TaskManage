@@ -261,11 +261,11 @@ export default {
       
       const result = []
       props.tasks.forEach(task => {
-        if (task.dependentNodes && Array.isArray(task.dependentNodes)) {
-          task.dependentNodes.forEach(dep => {
+        if (task.dependencyTaskIds && Array.isArray(task.dependencyTaskIds)) {
+          task.dependencyTaskIds.forEach(depId => {
             result.push({
-              id: `e${dep.id}-${task.id}`,
-              source: String(dep.id),
+              id: `e${depId}-${task.id}`,
+              source: String(depId),
               target: String(task.id),
               animated: true,
               type: 'straight',

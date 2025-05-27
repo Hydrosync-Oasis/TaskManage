@@ -82,7 +82,7 @@
                   <span>前驱节点</span>
                 </div>
               </template>
-              <TaskPredecessor :task="selectedTask" />
+              <TaskPredecessor :task="selectedTask" :allTasks="tasks" @task-updated="fetchTasks" />
             </el-collapse-item>
             <el-collapse-item title="任务状态" name="6">
               <template #title>
@@ -276,6 +276,7 @@ export default {
       description: ''
     })
     const projectTasks = ref([])
+    const tasks = ref([])
 
     // 获取项目列表
     const fetchProjects = async () => {
@@ -346,6 +347,7 @@ export default {
       try {
         const res = await getProjectTasks(projectId)
         projectTasks.value = res.data
+        tasks.value = res.data
       } catch (e) {
         console.error('获取项目任务失败:', e)
         projectTasks.value = []
@@ -491,6 +493,26 @@ export default {
       ElMessage.success(`已选择任务: ${task.title}`)
     }
 
+    // 获取任务
+    const fetchTasks = async () => {
+      if (!selectedProject.value || !selectedProject.value.id) return
+      
+      try {
+        const res = await getProjectTasks(selectedProject.value.id)
+        tasks.value = res.data
+        // 如果存在已选择的任务，需要刷新选择的任务信息
+        if (selectedTask.value) {
+          const updatedTask = res.data.find(task => task.id === selectedTask.value.id)
+          if (updatedTask) {
+            selectedTask.value = updatedTask
+          }
+        }
+      } catch (error) {
+        console.error('获取任务列表失败:', error)
+        ElMessage.error('获取任务列表失败')
+      }
+    }
+
     // 组件挂载时获取项目列表
     onMounted(() => {
       fetchProjects()
@@ -522,7 +544,9 @@ export default {
       handleUpdateProject,
       projectTasks,
       handleTaskAdded,
-      fetchProjectTasks
+      fetchProjectTasks,
+      tasks,
+      fetchTasks
     }
   }
 }
