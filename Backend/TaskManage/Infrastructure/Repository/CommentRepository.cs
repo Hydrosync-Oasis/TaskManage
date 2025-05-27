@@ -15,8 +15,11 @@ namespace Infrastructure.Repository {
             dbContext.Comments.Remove(task.Comments.First(x => x.Id == id));
         }
 
-        public async Task AddAsync(Comment comment) {
+        public async Task AddAsync(Comment comment)
+        {
             await dbContext.Comments.AddAsync(comment);
+            await dbContext.SaveChangesAsync();  // 一定要调用这个，才能提交事务
         }
+
     }
 }
