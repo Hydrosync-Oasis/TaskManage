@@ -309,7 +309,22 @@ export default {
         if (currentProject.value?.ownerUid) {
           try {
             const userResponse = await getUserInfo(currentProject.value.ownerUid)
-            ownerName.value = userResponse.data.Username
+            
+            // 通用方法获取用户名，忽略大小写差异
+            const userData = userResponse.data
+            // 尝试所有可能的用户名属性，忽略大小写
+            const possibleProps = ['Username', 'username', 'userName', 'UserName']
+            
+            // 在返回的数据中查找第一个匹配的属性
+            const usernameKey = Object.keys(userData).find(key => 
+              possibleProps.some(prop => key.toLowerCase() === prop.toLowerCase())
+            )
+            
+            if (usernameKey && userData[usernameKey]) {
+              ownerName.value = userData[usernameKey]
+            } else {
+              ownerName.value = `用户ID: ${currentProject.value.ownerUid}`
+            }
           } catch (error) {
             console.error('获取用户信息失败:', error)
             ownerName.value = `用户ID: ${currentProject.value.ownerUid}`
