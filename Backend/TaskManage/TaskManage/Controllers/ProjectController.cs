@@ -44,7 +44,7 @@ namespace TaskManage.Controllers
             }
         }
 
-        [Authorize]
+        [Authorize(Roles = "ProjectAdmin")]
         [HttpPost("Create")]
         public async Task<IActionResult> CreateProject([FromBody] ProjectDto dto)
         {

@@ -82,7 +82,7 @@
                   <span>前驱节点</span>
                 </div>
               </template>
-              <TaskPredecessor :task="selectedTask" />
+              <TaskPredecessor :task="selectedTask" :allTasks="tasks" @task-updated="fetchTasks" />
             </el-collapse-item>
             <el-collapse-item title="任务状态" name="6">
               <template #title>
@@ -107,7 +107,7 @@
             </div>
             <div class="info-item">
               <span class="label">项目所有者：</span>
-              <span class="value">{{ currentProject?.ownerUid || '未知' }}</span>
+              <span class="value">{{ ownerName || '未知' }}</span>
             </div>
             <div class="project-actions">
               <el-button 
@@ -220,6 +220,7 @@ import { ref, onMounted } from 'vue'
 import { Monitor, ChatDotRound, Calendar, Star, User, Document, Connection, Loading } from '@element-plus/icons-vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { getAllProjects, deleteProject, getProjectById, createProject, updateProject, getProjectTasks } from '@/api/project'
+import { getUserInfo } from '@/api/user'
 import DAGCanvas from './DAGCanvas.vue'
 import AIChat from './AIChat.vue'
 import TaskComment from './TaskComment.vue'
@@ -257,12 +258,14 @@ export default {
     const selectedProject = ref('')
     const currentProject = ref(null)
     const selectedTask = ref(null)
+    const ownerName = ref('')
     const createProjectDialogVisible = ref(false)
     const createProjectForm = ref(null)
     const creating = ref(false)
     const newProject = ref({
       name: '',
-      description: ''
+      description: '',
+      createdAt: null
     })
     const updateProjectDialogVisible = ref(false)
     const updateProjectForm = ref(null)
@@ -273,6 +276,7 @@ export default {
       description: ''
     })
     const projectTasks = ref([])
+    const tasks = ref([])
 
     // 获取项目列表
     const fetchProjects = async () => {
@@ -300,6 +304,32 @@ export default {
       try {
         const response = await getProjectById(projectId)
         currentProject.value = response.data
+        
+        // 获取项目所有者信息
+        if (currentProject.value?.ownerUid) {
+          try {
+            const userResponse = await getUserInfo(currentProject.value.ownerUid)
+            
+            // 通用方法获取用户名，忽略大小写差异
+            const userData = userResponse.data
+            // 尝试所有可能的用户名属性，忽略大小写
+            const possibleProps = ['Username', 'username', 'userName', 'UserName']
+            
+            // 在返回的数据中查找第一个匹配的属性
+            const usernameKey = Object.keys(userData).find(key => 
+              possibleProps.some(prop => key.toLowerCase() === prop.toLowerCase())
+            )
+            
+            if (usernameKey && userData[usernameKey]) {
+              ownerName.value = userData[usernameKey]
+            } else {
+              ownerName.value = `用户ID: ${currentProject.value.ownerUid}`
+            }
+          } catch (error) {
+            console.error('获取用户信息失败:', error)
+            ownerName.value = `用户ID: ${currentProject.value.ownerUid}`
+          }
+        }
       } catch (error) {
         ElMessage.error('获取项目详情失败')
         // 添加示例数据
@@ -310,6 +340,7 @@ export default {
           createdAt: new Date().toISOString(),
           ownerUid: '1001'
         }
+        ownerName.value = '示例用户'
       }
     }
 
@@ -331,6 +362,7 @@ export default {
       try {
         const res = await getProjectTasks(projectId)
         projectTasks.value = res.data
+        tasks.value = res.data
       } catch (e) {
         console.error('获取项目任务失败:', e)
         projectTasks.value = []
@@ -361,6 +393,9 @@ export default {
         await deleteProject(selectedProject.value)
         ElMessage.success('项目删除成功')
         selectedProject.value = ''
+        selectedTask.value = null
+        currentProject.value = null
+        projectTasks.value = []
         await fetchProjects() // 重新加载项目列表
       } catch (error) {
         if (error !== 'cancel') {
@@ -393,7 +428,8 @@ export default {
       createProjectDialogVisible.value = true
       newProject.value = {
         name: '',
-        description: ''
+        description: '',
+        createdAt: null
       }
     }
 
@@ -405,10 +441,22 @@ export default {
         await createProjectForm.value.validate()
         creating.value = true
         
-        await createProject(newProject.value)
+        // 设置创建时间为当前时间
+        newProject.value.createdAt = new Date().toISOString()
+        
+        const response = await createProject(newProject.value)
         ElMessage.success('项目创建成功')
         createProjectDialogVisible.value = false
         await fetchProjects() // 刷新项目列表
+        
+        // 如果创建成功并返回了项目ID，自动选中新创建的项目
+        if (response && response.data && response.data.id) {
+          selectedProject.value = response.data.id
+          await fetchProjectDetail(response.data.id)
+          // 新项目没有任务，清空任务列表
+          projectTasks.value = []
+          selectedTask.value = null
+        }
       } catch (error) {
         if (error !== 'cancel') {
           ElMessage.error(error.message || '创建项目失败')
@@ -460,6 +508,26 @@ export default {
       ElMessage.success(`已选择任务: ${task.title}`)
     }
 
+    // 获取任务
+    const fetchTasks = async () => {
+      if (!selectedProject.value || !selectedProject.value.id) return
+      
+      try {
+        const res = await getProjectTasks(selectedProject.value.id)
+        tasks.value = res.data
+        // 如果存在已选择的任务，需要刷新选择的任务信息
+        if (selectedTask.value) {
+          const updatedTask = res.data.find(task => task.id === selectedTask.value.id)
+          if (updatedTask) {
+            selectedTask.value = updatedTask
+          }
+        }
+      } catch (error) {
+        console.error('获取任务列表失败:', error)
+        ElMessage.error('获取任务列表失败')
+      }
+    }
+
     // 组件挂载时获取项目列表
     onMounted(() => {
       fetchProjects()
@@ -471,6 +539,7 @@ export default {
       selectedProject,
       currentProject,
       selectedTask,
+      ownerName,
       handleProjectChange,
       handleDeleteProject,
       handleTaskNodeClick,
@@ -490,7 +559,9 @@ export default {
       handleUpdateProject,
       projectTasks,
       handleTaskAdded,
-      fetchProjectTasks
+      fetchProjectTasks,
+      tasks,
+      fetchTasks
     }
   }
 }

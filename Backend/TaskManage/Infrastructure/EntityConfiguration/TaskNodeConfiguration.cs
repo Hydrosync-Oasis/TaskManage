@@ -14,6 +14,7 @@ public class TaskNodeConfiguration : IEntityTypeConfiguration<TaskNode>
         builder.HasOne(x => x.AssignedUser)
             .WithMany(y => y.AssignedTasks)
             .HasForeignKey(x => x.AssignedUserId)
+            //.IsRequired(false)
             .OnDelete(DeleteBehavior.Restrict);
         builder.HasOne(x => x.Project).WithMany(y => y.Tasks);
         builder.HasMany(x => x.DependentNodes).WithMany();

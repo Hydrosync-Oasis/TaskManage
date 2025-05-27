@@ -27,6 +27,14 @@ export function addTaskComment(data) {
   })
 }
 
+// 获取任务信息
+export function getTaskInfo(id) {
+  return request({
+    url: `/api/Task/Info/${id}`,
+    method: 'get'
+  })
+}
+
 // 获取评论详情
 export function getCommentById(id) {
   return request({

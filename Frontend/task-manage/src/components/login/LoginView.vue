@@ -6,7 +6,7 @@
       </div>
 
       <component
-        :is="title !== '登录' ? Login : Register"
+        :is="title === '登录' ? Login : Register"
         @login="onLogin"
         @register="onRegister"
       />
@@ -17,7 +17,7 @@
           type="text"
           @click="handleLoginRegister"
         >
-          {{ title }}
+          注册 / 登录
         </el-button>
         <el-button
           type="text"

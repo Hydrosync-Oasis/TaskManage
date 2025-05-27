@@ -24,4 +24,12 @@ export function register(data) {
     method: 'post',
     data
   })
+}
+
+// 获取用户信息
+export function getUserInfo(userId) {
+  return request({
+    url: `/User/QueryUser/User/${userId}`,
+    method: 'get'
+  })
 } 

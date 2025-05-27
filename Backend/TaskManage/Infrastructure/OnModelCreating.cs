@@ -28,6 +28,11 @@ namespace Infrastructure
                 .WithMany(u => u.Comments)
                 .OnDelete(DeleteBehavior.Restrict);
         }
+
+        protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder) {
+            base.OnConfiguring(optionsBuilder);
+            optionsBuilder.LogTo(Console.WriteLine);
+        }
     }
 
 
