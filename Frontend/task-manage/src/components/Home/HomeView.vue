@@ -107,7 +107,7 @@
             </div>
             <div class="info-item">
               <span class="label">项目所有者：</span>
-              <span class="value">{{ currentProject?.ownerUid || '未知' }}</span>
+              <span class="value">{{ ownerName || '未知' }}</span>
             </div>
             <div class="project-actions">
               <el-button 
@@ -220,6 +220,7 @@ import { ref, onMounted } from 'vue'
 import { Monitor, ChatDotRound, Calendar, Star, User, Document, Connection, Loading } from '@element-plus/icons-vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { getAllProjects, deleteProject, getProjectById, createProject, updateProject, getProjectTasks } from '@/api/project'
+import { getUserInfo } from '@/api/user'
 import DAGCanvas from './DAGCanvas.vue'
 import AIChat from './AIChat.vue'
 import TaskComment from './TaskComment.vue'
@@ -257,6 +258,7 @@ export default {
     const selectedProject = ref('')
     const currentProject = ref(null)
     const selectedTask = ref(null)
+    const ownerName = ref('')
     const createProjectDialogVisible = ref(false)
     const createProjectForm = ref(null)
     const creating = ref(false)
@@ -301,6 +303,17 @@ export default {
       try {
         const response = await getProjectById(projectId)
         currentProject.value = response.data
+        
+        // 获取项目所有者信息
+        if (currentProject.value?.ownerUid) {
+          try {
+            const userResponse = await getUserInfo(currentProject.value.ownerUid)
+            ownerName.value = userResponse.data.Username
+          } catch (error) {
+            console.error('获取用户信息失败:', error)
+            ownerName.value = `用户ID: ${currentProject.value.ownerUid}`
+          }
+        }
       } catch (error) {
         ElMessage.error('获取项目详情失败')
         // 添加示例数据
@@ -311,6 +324,7 @@ export default {
           createdAt: new Date().toISOString(),
           ownerUid: '1001'
         }
+        ownerName.value = '示例用户'
       }
     }
 
@@ -479,6 +493,7 @@ export default {
       selectedProject,
       currentProject,
       selectedTask,
+      ownerName,
       handleProjectChange,
       handleDeleteProject,
       handleTaskNodeClick,
