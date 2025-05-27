@@ -361,6 +361,9 @@ export default {
         await deleteProject(selectedProject.value)
         ElMessage.success('项目删除成功')
         selectedProject.value = ''
+        selectedTask.value = null
+        currentProject.value = null
+        projectTasks.value = []
         await fetchProjects() // 重新加载项目列表
       } catch (error) {
         if (error !== 'cancel') {
