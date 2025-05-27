@@ -262,7 +262,8 @@ export default {
     const creating = ref(false)
     const newProject = ref({
       name: '',
-      description: ''
+      description: '',
+      createdAt: null
     })
     const updateProjectDialogVisible = ref(false)
     const updateProjectForm = ref(null)
@@ -396,7 +397,8 @@ export default {
       createProjectDialogVisible.value = true
       newProject.value = {
         name: '',
-        description: ''
+        description: '',
+        createdAt: null
       }
     }
 
@@ -407,6 +409,9 @@ export default {
       try {
         await createProjectForm.value.validate()
         creating.value = true
+        
+        // 设置创建时间为当前时间
+        newProject.value.createdAt = new Date().toISOString()
         
         await createProject(newProject.value)
         ElMessage.success('项目创建成功')
