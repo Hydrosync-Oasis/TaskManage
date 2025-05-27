@@ -427,10 +427,19 @@ export default {
         // 设置创建时间为当前时间
         newProject.value.createdAt = new Date().toISOString()
         
-        await createProject(newProject.value)
+        const response = await createProject(newProject.value)
         ElMessage.success('项目创建成功')
         createProjectDialogVisible.value = false
         await fetchProjects() // 刷新项目列表
+        
+        // 如果创建成功并返回了项目ID，自动选中新创建的项目
+        if (response && response.data && response.data.id) {
+          selectedProject.value = response.data.id
+          await fetchProjectDetail(response.data.id)
+          // 新项目没有任务，清空任务列表
+          projectTasks.value = []
+          selectedTask.value = null
+        }
       } catch (error) {
         if (error !== 'cancel') {
           ElMessage.error(error.message || '创建项目失败')

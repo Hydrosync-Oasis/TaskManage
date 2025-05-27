@@ -117,7 +117,8 @@ export default {
   },
   emits: ['node-click', 'task-added'],
   setup(props, { emit }) {
-    const elements = ref([
+    // 示例元素数据
+    const sampleElements = [
       // 示例节点和连线，当没有传入tasks时使用
       {
         id: '1',
@@ -153,7 +154,10 @@ export default {
         type: 'straight',
         markerEnd: 'arrowclosed'
       },
-    ])
+    ];
+    
+    // 初始化为空数组
+    const elements = ref([])
 
     // 添加任务相关变量
     const addTaskDialogVisible = ref(false)
@@ -280,15 +284,21 @@ export default {
         const nodes = generateNodes()
         const edges = generateEdges()
         elements.value = [...nodes, ...edges]
+      } else if (props.projectId) {
+        // 有项目ID但没有任务数据时，清空示例数据
+        elements.value = []
+      } else {
+        // 没有项目ID时，使用示例数据
+        elements.value = [...sampleElements]
       }
-      // 没有任务数据时保持默认示例数据
     })
 
     // 处理节点点击事件
     const onNodeClick = (event, node) => {
       // 如果是示例节点，不触发事件
       if (['1', '2', '3'].includes(node.id)) {
-        return
+        ElMessage.info('这是示例节点，请添加真实任务或选择已有项目');
+        return;
       }
       
       // 找到对应的任务数据
