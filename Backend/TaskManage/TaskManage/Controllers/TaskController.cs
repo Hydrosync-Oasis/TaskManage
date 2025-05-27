@@ -60,19 +60,29 @@ namespace TaskManage.Controllers
         [HttpPost("/api/Comment/Add")]
         public async Task<IActionResult> AddComment([FromBody] CommentDto dto)
         {
+            // 验证用户身份
             var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier);
             if (userIdClaim == null)
                 return Unauthorized(new { error = "用户身份无效" });
 
+            // 验证请求体及评论内容
             if (dto == null || string.IsNullOrWhiteSpace(dto.Content))
                 return BadRequest(new { error = "评论内容不能为空" });
 
-            var taskNode = await taskService.GetTaskNodeByIdAsync(dto.TaskId);
-            if (taskNode == null)
-                return BadRequest(new { error = "关联的任务不存在" });
+            TaskNode taskNode;
+            try
+            {
+                // 尝试获取任务节点，找不到则捕获异常返回404
+                taskNode = await taskService.GetTaskNodeByIdAsync(dto.TaskId);
+            }
+            catch (KeyNotFoundException)
+            {
+                return NotFound(new { error = "关联的任务不存在" });
+            }
 
-            var userId = int.Parse(userIdClaim.Value);
+            int userId = int.Parse(userIdClaim.Value);
 
+            // 验证用户信息
             var userDto = await userService.GetUserInfo(userId);
             if (userDto == null)
                 return Unauthorized(new { error = "用户不存在" });
@@ -87,6 +97,7 @@ namespace TaskManage.Controllers
                 return Unauthorized(new { error = "用户不存在" });
             }
 
+            // 创建评论实体
             var comment = new Comment
             {
                 Content = dto.Content,
@@ -102,9 +113,11 @@ namespace TaskManage.Controllers
             }
             catch (Exception e)
             {
+                // 捕获其他异常，返回500错误
                 return StatusCode(500, new { error = e.Message });
             }
         }
+
 
 
 

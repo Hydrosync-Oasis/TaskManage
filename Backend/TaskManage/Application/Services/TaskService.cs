@@ -124,9 +124,11 @@ namespace Application.Services
         public async Task<TaskNode> GetTaskNodeByIdAsync(int id)
         {
             var node = await taskRepository.GetNodeById(id);
-            if (node == null) throw new ArgumentNullException(nameof(node));
+            if (node == null)
+                throw new KeyNotFoundException($"TaskNode with id={id} not found.");
             return node;
         }
+
 
         // 评论相关实现
         public Task AddCommentAsync(Comment comment)
