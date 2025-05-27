@@ -45,7 +45,7 @@ namespace Application.Services
             await taskRepository.UpdateAsync(task);
         }
 
-        private static bool HasCircle(TaskNode startNode, List<TaskNode> modifiedDependencyNodes)
+        private static bool HasCircle(TaskNode modifiedNode, List<TaskNode> modifiedDependencyNodes)
         {
             bool F(TaskNode node, HashSet<TaskNode> seen, HashSet<TaskNode> stackSet)
             {
@@ -69,18 +69,27 @@ namespace Application.Services
 
             List<TaskNode> GetDependencyList(TaskNode node)
             {
-                return node == startNode ? modifiedDependencyNodes : node.DependentNodes;
+                return node == modifiedNode ? modifiedDependencyNodes : node.DependentNodes;
             }
 
-            return F(startNode, new HashSet<TaskNode>(), new HashSet<TaskNode>());
+            return F(modifiedNode, new HashSet<TaskNode>(), new HashSet<TaskNode>());
         }
 
+        /// <summary>
+        /// 添加节点，绝不可能出现环
+        /// </summary>
+        /// <param name="dto">任务节点DTO</param>
+        /// <param name="uid">创建用户时的用户id</param>
+        /// <returns></returns>
+        /// <exception cref="ArgumentNullException">若DTO部分信息为空，抛出异常</exception>
         public async Task<int> AddTask(TaskDto dto, int uid)
         {
             if (dto.ProjectId == null) throw new ArgumentNullException(nameof(dto.ProjectId));
             if (dto.Priority == null) throw new ArgumentNullException(nameof(dto.Priority));
             if (dto.Deadline == null) throw new ArgumentNullException(nameof(dto.Deadline));
             if (dto.Title == null) throw new ArgumentNullException(nameof(dto.Title));
+
+            dto.DependencyTaskIds ??= [];
 
             var node = new TaskNode
             {
@@ -91,7 +100,8 @@ namespace Application.Services
                 Description = dto.Description,
                 Priority = dto.Priority.Value,
                 ProjectId = dto.ProjectId.Value,
-                CreateUserId = uid
+                CreateUserId = uid,
+                DependentNodes = dto.DependencyTaskIds.Select((x)=> GetTaskNodeByIdAsync(x).Result).ToList(),
             };
 
             return await taskRepository.AddAsync(node);

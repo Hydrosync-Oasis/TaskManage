@@ -47,13 +47,13 @@ namespace TaskManage.Controllers
                 if (info.CreateUserId != uid)
                     return Forbid("你不是创建该任务的用户");
 
-                if (dto.ProjectId != null)
+                if (dto.ProjectId != null && dto.ProjectId != info.ProjectId)
                     return BadRequest("不能设置/修改所属项目");
 
                 await taskService.UpdateTask(dto);
                 return Ok();
             } catch (Exception e) {
-                return StatusCode(500, e.Message);
+                return StatusCode(500, new { message = e.Message });
             }
         }
         // 添加评论（登录用户）

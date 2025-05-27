@@ -38,13 +38,13 @@ namespace Application.Services
             if (dto.Description is not null)
                 proj.Description = dto.Description;
 
-            if (dto.OwnerUid is not null)
+            if (dto.OwnerUid is not null && dto.OwnerUid != proj.OwnerId)
                 throw new ArgumentException("不能更改所有者");
 
             if (dto.Name is not null)
                 proj.Name = dto.Name;
 
-            if (dto.CreatedAt is not null)
+            if (dto.CreatedAt is not null && dto.CreatedAt != proj.CreatedAt)
                 throw new ArgumentException("不能更改创建时间");
 
             await projectRepository.UpdateProjectInfoAsync(proj);
