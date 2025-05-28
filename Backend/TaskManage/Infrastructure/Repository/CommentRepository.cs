@@ -11,11 +11,18 @@ namespace Infrastructure.Repository {
             return task == null ? throw new KeyNotFoundException("找不到该task") : task.Comments;
         }
 
-        public async Task DeleteByCommentIdAsync(int id) {
-            var task = await dbContext.TaskNodes.Include(x => x.Comments).FirstOrDefaultAsync(x=>x.Id == id);
-            ArgumentNullException.ThrowIfNull(task);
-            dbContext.Comments.Remove(task.Comments.First(x => x.Id == id));
+        public async Task DeleteByCommentIdAsync(int id)
+        {
+            var comment = await dbContext.Comments
+                .FirstOrDefaultAsync(c => c.Id == id);
+
+            if (comment == null)
+                throw new KeyNotFoundException($"找不到ID为 {id} 的评论");
+
+            dbContext.Comments.Remove(comment);
+            await dbContext.SaveChangesAsync();
         }
+
 
         public async Task AddAsync(Comment comment)
         {
