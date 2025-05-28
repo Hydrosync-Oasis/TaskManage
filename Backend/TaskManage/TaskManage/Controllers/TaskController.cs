@@ -184,8 +184,6 @@ namespace TaskManage.Controllers
             try
             {
                 var comments = await taskService.GetAllCommentsByTaskIdAsync(taskId);
-                if (comments.Count == 0)
-                    return NotFound(new { message = "该任务下暂无评论" });
 
                 // 映射 Comment 实体到 CommentDto，包含 CreatedTime
                 var commentDtos = comments.Select(c => new CommentDto
