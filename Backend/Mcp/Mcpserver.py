@@ -10,7 +10,7 @@ from pydantic import BaseModel
 from typing import List
 
 # 从 appsettings.json 加载 JWT 配置
-with open(r"Backend\TaskManage\TaskManage\appsettings.json", "r") as f:
+with open(r"Backend\TaskManage\TaskManage\Properties\appsettings .json", "r") as f:
     jwt_config = json.load(f)["Jwt"]
 
 SECRET_KEY = jwt_config["Key"]
