@@ -8,15 +8,15 @@
           </template>
         </el-empty>
       </div>
-      <div v-else v-for="comment in comments" :key="comment.id" class="comment-item">
+      <div v-else v-for="comment in commentWithUsernames" :key="comment.commentId" class="comment-item">
         <div class="comment-header">
-          <span class="comment-author">{{ comment.owner?.username || '未知用户' }}</span>
+          <span class="comment-author">{{ comment.username }}</span>
           <span class="comment-time">{{ formatTime(comment.createdTime) }}</span>
           <el-button 
             v-if="canDeleteComment(comment)"
             type="text" 
             class="delete-btn"
-            @click="handleDeleteComment(comment.id)"
+            @click="handleDeleteComment(comment.commentId)"
           >
             删除
           </el-button>
@@ -45,10 +45,11 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, computed, watch } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { addTaskComment, deleteTaskComment, getTaskComments } from '@/api/task'
 import { getUserIdFromToken, getUserRoleFromToken } from '@/utils/jwtUtils'
+import { getUserInfo } from '@/api/user'
 
 /* eslint-disable no-undef */
 const props = defineProps({
@@ -60,7 +61,17 @@ const props = defineProps({
 /* eslint-enable no-undef */
 
 const comments = ref([])
+const usernames = ref({}) // 存储用户ID到用户名的映射
 const newComment = ref('')
+const loading = ref(false)
+
+// 合并评论和用户名的计算属性
+const commentWithUsernames = computed(() => {
+  return comments.value.map(comment => ({
+    ...comment,
+    username: usernames.value[comment.userId] || `用户ID: ${comment.userId}`
+  }))
+})
 
 // 格式化时间
 const formatTime = (time) => {
@@ -74,7 +85,32 @@ const canDeleteComment = (comment) => {
   // 使用JWT工具函数获取用户ID和角色
   const currentUserId = getUserIdFromToken()
   const userRole = getUserRoleFromToken()
-  return userRole === 'ProjectAdmin' || comment.owner?.id === parseInt(currentUserId)
+  return userRole === 'ProjectAdmin' || comment.userId === parseInt(currentUserId)
+}
+
+// 获取用户名
+const fetchUsername = async (userId) => {
+  if (!userId || usernames.value[userId]) return
+  
+  try {
+    const response = await getUserInfo(userId)
+    const userData = response.data
+    
+    // 尝试各种可能的用户名属性名
+    const possibleProps = ['Username', 'username', 'userName', 'UserName', 'name']
+    const usernameKey = Object.keys(userData).find(key => 
+      possibleProps.some(prop => key.toLowerCase() === prop.toLowerCase())
+    )
+    
+    if (usernameKey && userData[usernameKey]) {
+      usernames.value[userId] = userData[usernameKey]
+    } else {
+      usernames.value[userId] = `用户ID: ${userId}`
+    }
+  } catch (error) {
+    console.error(`获取用户${userId}信息失败:`, error)
+    usernames.value[userId] = `用户ID: ${userId}`
+  }
 }
 
 // 获取评论列表
@@ -84,13 +120,34 @@ const fetchComments = async () => {
     return
   }
   
+  loading.value = true
   try {
     const response = await getTaskComments(props.taskId)
-    comments.value = response.data
+    console.log('获取到的评论数据:', response.data)
+    
+    // 确保每个评论都有commentId字段(后端返回的是CommentId)
+    comments.value = response.data.map(comment => ({
+      commentId: comment.commentId,
+      taskId: comment.taskId,
+      userId: comment.userId,
+      content: comment.content,
+      createdTime: comment.createdTime
+    }))
+    
+    // 为每个评论获取用户名
+    for (const comment of comments.value) {
+      fetchUsername(comment.userId)
+    }
   } catch (error) {
-    // 错误已由响应拦截器处理，这里可以添加额外的处理逻辑
-    console.error('获取评论失败:', error)
-    comments.value = [] // 确保评论列表为空数组而不是undefined
+    if (error.response && error.response.status === 404) {
+      // 如果返回404(没有评论)，设置为空数组而不是报错
+      comments.value = []
+    } else {
+      console.error('获取评论失败:', error)
+      comments.value = []
+    }
+  } finally {
+    loading.value = false
   }
 }
 
@@ -135,8 +192,19 @@ const handleDeleteComment = async (commentId) => {
   }
 }
 
+// 当taskId变化时重新获取评论
+watch(() => props.taskId, (newVal) => {
+  if (newVal) {
+    fetchComments()
+  } else {
+    comments.value = []
+  }
+})
+
 onMounted(() => {
-  fetchComments()
+  if (props.taskId) {
+    fetchComments()
+  }
 })
 </script>
 

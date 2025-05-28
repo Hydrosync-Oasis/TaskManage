@@ -53,6 +53,7 @@
 import { ref, computed, watch } from 'vue'
 import { ElMessage } from 'element-plus'
 import { updateTask } from '@/api/task'
+import { getUserIdFromToken, getUserRoleFromToken } from '@/utils/jwtUtils'
 
 /* eslint-disable no-undef */
 const props = defineProps({
@@ -79,12 +80,7 @@ const formatDate = (dateString) => {
 }
 
 // 计算是否已过期
-const isOverdue = computed(() => {
-  if (!props.task?.deadline) return false
-  const deadline = new Date(props.task.deadline)
-  const today = new Date()
-  return deadline < today
-})
+const isOverdue = ref(false)
 
 // 计算剩余天数
 const daysLeft = computed(() => {
@@ -140,19 +136,23 @@ const handleUpdateDates = async () => {
   }
 }
 
-// 当任务变化时，更新表单数据
+// 当任务变化时，更新日期数据和权限
 watch(() => props.task, (newTask) => {
   if (newTask) {
-    dateForm.value.startDate = newTask.startDate || ''
-    dateForm.value.deadline = newTask.deadline || ''
+    if (newTask.deadline) {
+      const deadline = new Date(newTask.deadline)
+      isOverdue.value = deadline < new Date() && newTask.taskStatus !== 2 // 2表示已完成
+    } else {
+      isOverdue.value = false
+    }
     
-    // 检查是否有权限更新日期（这里可以根据实际权限逻辑调整）
-    const currentUserId = localStorage.getItem('userId')
+    // 检查是否有权限更新日期
+    const currentUserId = getUserIdFromToken()
+    const userRole = getUserRoleFromToken()
     canUpdateDates.value = newTask.createUserId === parseInt(currentUserId) || 
-                          localStorage.getItem('userRole') === 'ProjectAdmin'
+                          userRole === 'ProjectAdmin'
   } else {
-    dateForm.value.startDate = ''
-    dateForm.value.deadline = ''
+    isOverdue.value = false
     canUpdateDates.value = false
   }
 }, { immediate: true })
@@ -202,4 +202,4 @@ watch(() => props.task, (newTask) => {
   padding: 20px 0;
   font-style: italic;
 }
-</style> 
+</style>

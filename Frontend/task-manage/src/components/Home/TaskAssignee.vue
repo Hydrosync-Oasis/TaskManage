@@ -34,9 +34,11 @@
 </template>
 
 <script setup>
-import { ref, watch } from 'vue'
+import { ref, watch, onMounted } from 'vue'
 import { ElMessage } from 'element-plus'
 import { updateTask } from '@/api/task'
+import { getUserInfo } from '@/api/user'
+import { getUserIdFromToken, getUserRoleFromToken } from '@/utils/jwtUtils'
 
 /* eslint-disable no-undef */
 const props = defineProps({
@@ -79,15 +81,14 @@ const handleUpdateAssignee = async () => {
   }
 }
 
-// 当任务变化时，更新负责人数据
+// 当任务变化时，更新权限
 watch(() => props.task, (newTask) => {
   if (newTask) {
-    selectedAssignee.value = newTask.assigneeId || ''
-    
-    // 检查是否有权限更新负责人（这里可以根据实际权限逻辑调整）
-    const currentUserId = localStorage.getItem('userId')
+    // 检查是否有权限更新任务负责人
+    const currentUserId = getUserIdFromToken()
+    const userRole = getUserRoleFromToken()
     canUpdateAssignee.value = newTask.createUserId === parseInt(currentUserId) || 
-                             localStorage.getItem('userRole') === 'ProjectAdmin'
+                              userRole === 'ProjectAdmin'
   } else {
     selectedAssignee.value = ''
     canUpdateAssignee.value = false
@@ -140,4 +141,4 @@ watch(() => props.task, (newTask) => {
   padding: 20px 0;
   font-style: italic;
 }
-</style> 
+</style>

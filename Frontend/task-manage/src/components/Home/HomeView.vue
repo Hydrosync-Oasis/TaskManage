@@ -134,6 +134,7 @@
               :projectId="selectedProject" 
               @node-click="handleTaskNodeClick" 
               @task-added="handleTaskAdded"
+              :key="refreshKey"
             />
           </div>
         </el-col>
@@ -277,6 +278,7 @@ export default {
     })
     const projectTasks = ref([])
     const tasks = ref([])
+    const refreshKey = ref(0)
 
     // 获取项目列表
     const fetchProjects = async () => {
@@ -514,7 +516,11 @@ export default {
       
       try {
         const res = await getProjectTasks(selectedProject.value.id)
+        // 更新所有任务列表
         tasks.value = res.data
+        // 同步更新流程图使用的任务数据
+        projectTasks.value = res.data
+        
         // 如果存在已选择的任务，需要刷新选择的任务信息
         if (selectedTask.value) {
           const updatedTask = res.data.find(task => task.id === selectedTask.value.id)
@@ -522,6 +528,9 @@ export default {
             selectedTask.value = updatedTask
           }
         }
+        
+        // 强制流程图重新渲染
+        refreshKey.value += 1
       } catch (error) {
         console.error('获取任务列表失败:', error)
         ElMessage.error('获取任务列表失败')
@@ -561,7 +570,8 @@ export default {
       handleTaskAdded,
       fetchProjectTasks,
       tasks,
-      fetchTasks
+      fetchTasks,
+      refreshKey
     }
   }
 }

@@ -7,6 +7,7 @@ namespace Infrastructure.Repository {
         public async Task<List<Comment>> GetAllCommentsByTaskIdAsync(int id) {
             var task = await dbContext.TaskNodes
                 .Include(x => x.Comments)
+                .ThenInclude(x=>x.Owner)
                 .Include(x => x.AssignedUser).FirstOrDefaultAsync(x => x.Id == id);
             return task == null ? throw new KeyNotFoundException("找不到该task") : task.Comments;
         }
