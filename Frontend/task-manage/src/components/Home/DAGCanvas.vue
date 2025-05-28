@@ -11,7 +11,11 @@
         添加任务
       </el-button>
     </div>
-    <VueFlow v-model="elements" class="vue-flow-wrapper">
+    <VueFlow 
+      v-model="elements" 
+      class="vue-flow-wrapper"
+      :default-edge-options="defaultEdgeOptions"
+    >
       <Background pattern-color="#aaa" gap="8" />
       <Controls />
       <MiniMap />
@@ -117,6 +121,18 @@ export default {
   },
   emits: ['node-click', 'task-added'],
   setup(props, { emit }) {
+    // 连线默认配置
+    const defaultEdgeOptions = {
+      animated: true,
+      style: { strokeWidth: 2, stroke: '#3e9eff' },
+      markerEnd: {
+        type: 'arrowclosed',
+        width: 20,
+        height: 20,
+        color: '#3e9eff',
+      },
+    }
+    
     // 示例元素数据
     const sampleElements = [
       // 示例节点和连线，当没有传入tasks时使用
@@ -244,15 +260,103 @@ export default {
     const generateNodes = () => {
       if (!props.tasks || props.tasks.length === 0) return []
       
-      return props.tasks.map(task => ({
-        id: String(task.id),
-        label: task.title,
-        // 可根据task.status设置不同的样式
-        type: task.type || 'default',
-        // 使用相对合理的位置布局
-        position: { x: Math.random() * 400, y: Math.random() * 400 },
-        data: task // 保存完整任务数据，方便后续使用
-      }))
+      // 计算每个节点的层级
+      const nodeDepths = {}
+      const nodeMap = {}
+      
+      // 创建节点映射
+      props.tasks.forEach(task => {
+        nodeMap[task.id] = task
+      })
+      
+      // 计算节点深度的函数
+      const calculateDepth = (taskId, visited = new Set()) => {
+        // 防止循环依赖
+        if (visited.has(taskId)) return 0
+        visited.add(taskId)
+        
+        const task = nodeMap[taskId]
+        if (!task || !task.dependencyTaskIds || task.dependencyTaskIds.length === 0) {
+          return 0 // 没有依赖的节点在最顶层
+        }
+        
+        // 计算所有依赖节点的最大深度
+        let maxDepth = 0
+        task.dependencyTaskIds.forEach(depId => {
+          const depDepth = calculateDepth(depId, new Set(visited))
+          maxDepth = Math.max(maxDepth, depDepth)
+        })
+        
+        // 当前节点的深度是其依赖节点的最大深度 + 1
+        return maxDepth + 1
+      }
+      
+      // 为每个节点计算深度
+      props.tasks.forEach(task => {
+        nodeDepths[task.id] = calculateDepth(task.id)
+      })
+      
+      // 按层级对节点进行分组
+      const levelGroups = {}
+      Object.keys(nodeDepths).forEach(taskId => {
+        const depth = nodeDepths[taskId]
+        if (!levelGroups[depth]) {
+          levelGroups[depth] = []
+        }
+        levelGroups[depth].push(Number(taskId))
+      })
+      
+      // 计算每个层级的节点数量，用于水平布局
+      const levelCounts = {}
+      Object.keys(levelGroups).forEach(level => {
+        levelCounts[level] = levelGroups[level].length
+      })
+      
+      // 生成节点位置
+      return props.tasks.map(task => {
+        const depth = nodeDepths[task.id]
+        const nodesInLevel = levelCounts[depth]
+        const indexInLevel = levelGroups[depth].indexOf(task.id)
+        
+        // 计算水平位置：均匀分布在画布宽度上
+        const xStep = 600 / (nodesInLevel + 1)
+        const x = (indexInLevel + 1) * xStep
+        
+        // 计算垂直位置：根据层级决定
+        const y = depth * 120 + 50
+        
+        // 根据任务状态设置不同样式
+        let style = {}
+        let className = ''
+        
+        // 根据任务优先级设置不同的边框颜色
+        if (task.priority === 2) { // 高优先级
+          style = { border: '2px solid #f56c6c', fontWeight: 'bold' }
+          className = 'high-priority'
+        } else if (task.priority === 1) { // 中优先级
+          style = { border: '2px solid #e6a23c' }
+          className = 'medium-priority'
+        }
+        
+        // 根据任务状态设置不同的背景色
+        if (task.status === 2) { // 已完成
+          style = { ...style, backgroundColor: '#f0f9eb', color: '#67c23a' }
+          className += ' completed'
+        } else if (task.status === 1) { // 进行中
+          style = { ...style, backgroundColor: '#ecf5ff', color: '#409eff' }
+          className += ' in-progress'
+        }
+        
+        return {
+          id: String(task.id),
+          label: task.title,
+          type: task.type || 'default',
+          position: { x, y },
+          data: task,
+          style,
+          className
+        }
+      })
     }
 
     // 计算连线
@@ -268,8 +372,14 @@ export default {
               source: String(depId),
               target: String(task.id),
               animated: true,
-              type: 'straight',
-              markerEnd: 'arrowclosed'
+              type: 'smoothstep',
+              style: { strokeWidth: 2, stroke: '#3e9eff' },
+              markerEnd: {
+                type: 'arrowclosed',
+                width: 20,
+                height: 20,
+                color: '#3e9eff',
+              }
             })
           })
         }
@@ -315,7 +425,8 @@ export default {
       taskForm,
       submitting,
       showAddTaskDialog,
-      handleAddTask
+      handleAddTask,
+      defaultEdgeOptions
     }
   }
 }
@@ -339,5 +450,57 @@ export default {
   width: 100%;
   height: 600px;
   background-color: #fff;
+}
+
+:deep(.vue-flow__node) {
+  padding: 10px 15px;
+  border-radius: 5px;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+  min-width: 150px;
+  text-align: center;
+  font-weight: 500;
+  border: 1px solid #dcdfe6;
+  background-color: white;
+  transition: all 0.3s;
+}
+
+:deep(.vue-flow__node:hover) {
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  transform: translateY(-2px);
+}
+
+:deep(.vue-flow__edge-path) {
+  stroke-width: 2;
+}
+
+:deep(.vue-flow__edge.animated .vue-flow__edge-path) {
+  stroke-dasharray: 5;
+  animation: dashdraw 0.5s linear infinite;
+}
+
+:deep(.high-priority) {
+  border-width: 2px;
+  border-color: #f56c6c;
+}
+
+:deep(.medium-priority) {
+  border-width: 2px;
+  border-color: #e6a23c;
+}
+
+:deep(.completed) {
+  background-color: #f0f9eb;
+  color: #67c23a;
+}
+
+:deep(.in-progress) {
+  background-color: #ecf5ff;
+  color: #409eff;
+}
+
+@keyframes dashdraw {
+  from {
+    stroke-dashoffset: 10;
+  }
 }
 </style> 
