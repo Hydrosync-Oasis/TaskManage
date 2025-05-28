@@ -217,5 +217,36 @@ namespace TaskManage.Controllers
             }
         }
 
+        [HttpDelete("Delete/{id:int}")]
+        public async Task<IActionResult> DeleteTask(int id)
+        {
+            var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier);
+            if (userIdClaim == null || !int.TryParse(userIdClaim.Value, out int userId))
+                return Unauthorized(new { error = "用户身份无效" });
+
+            try
+            {
+                var taskNode = await taskService.GetTaskNodeByIdAsync(id);
+                if (taskNode == null)
+                    return NotFound(new { error = $"找不到ID为 {id} 的任务节点" });
+
+                var user = await userService.GetUserById(userId);
+
+                bool isSystemAdmin = user.UserRole == UserRole.Admin;
+                bool isProjectAdmin = user.UserRole == UserRole.ProjectAdmin;
+
+                if (!isSystemAdmin && !isProjectAdmin)
+                    return Forbid();
+
+                await taskService.RemoveTask(id);
+
+                return Ok(new { message = "任务节点删除成功" });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { error = ex.Message });
+            }
+        }
+
     }
 }
