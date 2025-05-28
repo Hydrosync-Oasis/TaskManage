@@ -84,10 +84,11 @@ class TaskUpdateRequest(BaseModel):
     createUserId: int
     dependencyTaskIds: List[int]
 
-# 所有工具函数使用 request + get_user_id_from_token
+# project接口
 @mcp.tool()
 async def create_project(request: Request, body: ProjectCreateRequest) -> str:
     user_id = await get_user_id_from_token(request)
+    print(f"User ID {user_id} is creating a new project.")
     url = "http://localhost:7062/api/Project/Create"
     resp = requests.post(
         url,
@@ -99,6 +100,7 @@ async def create_project(request: Request, body: ProjectCreateRequest) -> str:
 @mcp.tool()
 async def get_all_projects(request: Request) -> str:
     user_id = await get_user_id_from_token(request)
+    print(f"User ID {user_id} is fetching all projects.")
     url = "https://localhost:7062/api/Project/AllProjects"
     resp = requests.get(url, headers={"Authorization": request.headers.get("Authorization")})
     return resp.text if resp.status_code == 200 else f"获取失败: {resp.text}"
@@ -106,6 +108,7 @@ async def get_all_projects(request: Request) -> str:
 @mcp.tool()
 async def get_project_by_id(request: Request, id: int) -> str:
     user_id = await get_user_id_from_token(request)
+    print(f"User ID {user_id} is fetching project with ID: {id}.")
     url = f"https://localhost:7062/api/Project/{id}"
     resp = requests.get(url, headers={"Authorization": request.headers.get("Authorization")})
     return resp.text if resp.status_code == 200 else f"获取失败: {resp.text}"
@@ -113,6 +116,7 @@ async def get_project_by_id(request: Request, id: int) -> str:
 @mcp.tool()
 async def update_project(request: Request, body: ProjectUpdateRequest) -> str:
     user_id = await get_user_id_from_token(request)
+    print(f"User ID {user_id} is updating project with ID: {body.id}.")
     url = f"https://localhost:7062/api/Project/Update/{body.id}"
     resp = requests.put(
         url,
@@ -124,6 +128,7 @@ async def update_project(request: Request, body: ProjectUpdateRequest) -> str:
 @mcp.tool()
 async def delete_project(request: Request, id: int) -> str:
     user_id = await get_user_id_from_token(request)
+    print(f"User ID {user_id} is deleting project with ID: {id}.")
     url = f"https://localhost:7062/api/Project/Delete/{id}"
     resp = requests.delete(url, headers={"Authorization": request.headers.get("Authorization")})
     return "删除成功" if resp.status_code == 200 else f"删除失败: {resp.text}"
@@ -131,13 +136,16 @@ async def delete_project(request: Request, id: int) -> str:
 @mcp.tool()
 async def get_project_tasks(request: Request, id: int) -> str:
     user_id = await get_user_id_from_token(request)
+    print(f"User ID {user_id} is fetching tasks for project ID: {id}.")
     url = f"https://localhost:7062/api/Project/{id}/Tasks"
     resp = requests.get(url, headers={"Authorization": request.headers.get("Authorization")})
     return resp.text if resp.status_code == 200 else f"获取失败: {resp.text}"
 
+#task接口
 @mcp.tool()
 async def create_task(request: Request, body: TaskCreateRequest) -> str:
     user_id = await get_user_id_from_token(request)
+    print(f"User ID {user_id} is creating a new task.")
     url = "https://localhost:7062/api/Task/Add"
     resp = requests.post(
         url,
@@ -150,6 +158,7 @@ async def create_task(request: Request, body: TaskCreateRequest) -> str:
 @mcp.tool()
 async def update_task(request: Request, body: TaskUpdateRequest) -> str:
     user_id = await get_user_id_from_token(request)
+    print(f"User ID {user_id} is updating task with ID: {body.id}.")
     url = "https://localhost:7062/api/Task/Update"
     resp = requests.put(
         url,
@@ -161,6 +170,7 @@ async def update_task(request: Request, body: TaskUpdateRequest) -> str:
 @mcp.tool()
 async def delete_task(request: Request, id: int) -> str:
     user_id = await get_user_id_from_token(request)
+    print(f"User ID {user_id} is deleting task with ID: {id}.")
     url = f"https://localhost:7062/api/Task/Delete/{id}"
     resp = requests.delete(url, headers={"Authorization": request.headers.get("Authorization")})
     return "删除成功" if resp.status_code == 200 else f"删除失败: {resp.text}"
@@ -168,6 +178,7 @@ async def delete_task(request: Request, id: int) -> str:
 @mcp.tool()
 async def get_comment(request: Request, id: int) -> str:
     user_id = await get_user_id_from_token(request)
+    print(f"User ID {user_id} is fetching comment with ID: {id}.")
     url = f"https://localhost:7062/api/Comment/{id}"
     resp = requests.get(url, headers={"Authorization": request.headers.get("Authorization")})
     if resp.status_code == 200:
@@ -180,6 +191,7 @@ async def get_comment(request: Request, id: int) -> str:
 @mcp.tool()
 async def add_comment(request: Request, body: CommentAddRequest) -> str:
     user_id = await get_user_id_from_token(request)
+    print(f"User ID {user_id} is adding a comment.")
     url = "https://localhost:7062/api/Comment/Add"
     resp = requests.post(
         url,
@@ -192,6 +204,7 @@ async def add_comment(request: Request, body: CommentAddRequest) -> str:
 @mcp.tool()
 async def get_task_comments(request: Request, id: int) -> str:
     user_id = await get_user_id_from_token(request)
+    print(f"User ID {user_id} is fetching comments for task ID: {id}.")
     url = f"https://localhost:7062/api/Task/{id}/Comments"
     resp = requests.get(url, headers={"Authorization": request.headers.get("Authorization")})
     return resp.text if resp.status_code == 200 else f"获取失败: {resp.text}"
