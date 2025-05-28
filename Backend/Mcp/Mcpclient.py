@@ -14,7 +14,7 @@ from langchain_core.messages.ai import AIMessage
 sys.stdout.reconfigure(encoding='utf-8')
 
 def extract_user_id(token: str) -> int:
-    with open(r"Backend\TaskManage\TaskManage\Properties\appsettings .json", "r") as f:
+    with open(r"..\Backend\TaskManage\TaskManage\Properties\appsettings.json", "r") as f:
         config = json.load(f)
     jwt_config = config["Jwt"]
     key = jwt_config["Key"]
@@ -67,7 +67,7 @@ async def main(query: str, token: str):
         user_id = extract_user_id(token)
         client = MCPClient(token, user_id)
         await client.connect_to_server(
-            "TaskManage\\Backend\\Mcp\\Mcpsever.py"
+            ".\\Mcpserver.py"
         )
         res = await client.process_query(query)
         print(res)
