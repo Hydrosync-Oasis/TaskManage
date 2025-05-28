@@ -134,6 +134,7 @@
               :projectId="selectedProject" 
               @node-click="handleTaskNodeClick" 
               @task-added="handleTaskAdded"
+              :key="refreshKey"
             />
           </div>
         </el-col>
@@ -277,6 +278,7 @@ export default {
     })
     const projectTasks = ref([])
     const tasks = ref([])
+    const refreshKey = ref(0)
 
     // 获取项目列表
     const fetchProjects = async () => {
@@ -527,8 +529,8 @@ export default {
           }
         }
         
-        // 添加成功信息提示
-        ElMessage.success('任务数据已更新')
+        // 强制流程图重新渲染
+        refreshKey.value += 1
       } catch (error) {
         console.error('获取任务列表失败:', error)
         ElMessage.error('获取任务列表失败')
@@ -568,7 +570,8 @@ export default {
       handleTaskAdded,
       fetchProjectTasks,
       tasks,
-      fetchTasks
+      fetchTasks,
+      refreshKey
     }
   }
 }

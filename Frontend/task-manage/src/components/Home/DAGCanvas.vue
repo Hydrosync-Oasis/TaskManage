@@ -95,7 +95,7 @@ import '@vue-flow/core/dist/style.css'
 import '@vue-flow/core/dist/theme-default.css'
 import '@vue-flow/controls/dist/style.css'
 import '@vue-flow/minimap/dist/style.css'
-import { ref, watchEffect } from 'vue'
+import { ref, watchEffect, nextTick } from 'vue'
 import { ElMessage } from 'element-plus'
 import { Plus } from '@element-plus/icons-vue'
 import { createTask } from '@/api/task'
@@ -394,6 +394,12 @@ export default {
         const nodes = generateNodes()
         const edges = generateEdges()
         elements.value = [...nodes, ...edges]
+
+        // 调整视图以适应所有节点
+        nextTick(() => {
+          const { fitView } = useVueFlow()
+          fitView({ padding: 0.2, includeHiddenNodes: false })
+        })
       } else if (props.projectId) {
         // 有项目ID但没有任务数据时，清空示例数据
         elements.value = []

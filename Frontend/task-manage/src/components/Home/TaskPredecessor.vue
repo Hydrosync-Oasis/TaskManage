@@ -71,6 +71,9 @@ const selectedDependency = ref('')
 const updating = ref(false)
 const canUpdateDependencies = ref(false)
 
+// 定义emit以便通知父组件任务已更新
+const emit = defineEmits(['task-updated'])
+
 // 计算是否有依赖项
 const hasDependencies = computed(() => {
   return dependentNodes.value && dependentNodes.value.length > 0
@@ -128,8 +131,16 @@ const handleAddDependency = async () => {
     ElMessage.success('前驱节点添加成功')
     selectedDependency.value = ''
     
-    // 触发父组件刷新任务列表
+    // 立即刷新前驱任务数据
+    await fetchDependentTasksInfo()
+    
+    // 触发父组件刷新任务列表和流程图
     emit('task-updated')
+    
+    // 延迟500ms后再次刷新，确保数据已完全更新
+    setTimeout(() => {
+      emit('task-updated')
+    }, 500)
   } catch (error) {
     ElMessage.error('添加前驱节点失败')
     console.error('添加前驱节点失败:', error)
@@ -156,8 +167,16 @@ const handleRemoveDependency = async (dependency) => {
     // 更新本地状态
     ElMessage.success('前驱节点移除成功')
     
-    // 触发父组件刷新任务列表
+    // 立即刷新前驱任务数据
+    await fetchDependentTasksInfo()
+    
+    // 触发父组件刷新任务列表和流程图
     emit('task-updated')
+    
+    // 延迟500ms后再次刷新，确保数据已完全更新
+    setTimeout(() => {
+      emit('task-updated')
+    }, 500)
   } catch (error) {
     ElMessage.error('移除前驱节点失败')
     console.error('移除前驱节点失败:', error)
@@ -182,8 +201,12 @@ watch(() => props.task, (newTask) => {
   }
 }, { immediate: true })
 
-// 定义emit以便通知父组件任务已更新
-const emit = defineEmits(['task-updated'])
+// 当allTasks更新时，也更新依赖节点信息
+watch(() => props.allTasks, () => {
+  if (props.task) {
+    fetchDependentTasksInfo()
+  }
+}, { deep: true })
 </script>
 
 <style scoped>
