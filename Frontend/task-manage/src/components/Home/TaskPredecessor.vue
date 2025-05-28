@@ -192,22 +192,30 @@ const emit = defineEmits(['task-updated'])
 }
 
 .task-info {
-  background-color: #f5f7fa;
+  background-color: #f8fafc;
   border-radius: 8px;
   padding: 15px;
-  border: 1px solid #e4e7ed;
+  border: 1px solid #e0e6ed;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+  transition: all 0.3s ease;
 }
 
 .section-title {
-  font-weight: bold;
-  color: #606266;
-  margin-bottom: 10px;
+  font-weight: 600;
+  color: #3182ce;
+  margin-bottom: 12px;
+  font-size: 14px;
 }
 
 .no-dependencies {
-  color: #909399;
+  color: #64748b;
   font-style: italic;
-  padding: 10px 0;
+  padding: 12px 0;
+  text-align: center;
+  background-color: #f1f5f9;
+  border-radius: 6px;
+  margin-bottom: 15px;
+  border: 1px dashed #cbd5e1;
 }
 
 .dependency-update {
@@ -220,9 +228,54 @@ const emit = defineEmits(['task-updated'])
 }
 
 .no-task {
-  color: #909399;
+  color: #64748b;
   text-align: center;
-  padding: 20px 0;
+  padding: 24px 0;
   font-style: italic;
+  background-color: #f1f5f9;
+  border-radius: 8px;
+  border: 1px dashed #cbd5e1;
+}
+
+/* 表格样式优化 */
+:deep(.el-table) {
+  border-radius: 6px;
+  overflow: hidden;
+  --el-table-border-color: #e2e8f0;
+  margin-bottom: 15px;
+}
+
+:deep(.el-table__header) {
+  background-color: #f1f5f9;
+}
+
+:deep(.el-table__row:hover) {
+  background-color: #f1f5f9;
+}
+
+:deep(.el-button.el-button--danger) {
+  background-color: #fee2e2;
+  border-color: #fee2e2;
+  color: #ef4444;
+}
+
+:deep(.el-button.el-button--danger:hover) {
+  background-color: #fecaca;
+  border-color: #fecaca;
+}
+
+:deep(.el-divider__text) {
+  background-color: #f8fafc;
+  color: #64748b;
+  font-size: 13px;
+}
+
+:deep(.el-select) {
+  width: 100%;
+}
+
+:deep(.el-button--primary) {
+  width: 100%;
+  margin-top: 12px;
 }
 </style>
