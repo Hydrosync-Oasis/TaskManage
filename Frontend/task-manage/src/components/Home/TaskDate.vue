@@ -62,6 +62,8 @@ const props = defineProps({
     default: null
   }
 })
+
+const emit = defineEmits(['task-updated'])
 /* eslint-enable no-undef */
 
 const dateForm = ref({
@@ -121,13 +123,16 @@ const handleUpdateDates = async () => {
   
   updating.value = true
   try {
-    await updateTask({
+    const response = await updateTask({
       id: props.task.id,
       startDate: dateForm.value.startDate || undefined,
       deadline: dateForm.value.deadline || undefined
     })
     
     ElMessage.success('任务日期更新成功')
+    
+    // 通知父组件任务已更新，需要刷新任务数据
+    emit('task-updated')
   } catch (error) {
     ElMessage.error('更新任务日期失败')
     console.error('更新任务日期失败:', error)

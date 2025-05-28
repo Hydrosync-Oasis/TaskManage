@@ -46,7 +46,7 @@
                   <span>制定日期，截止日期</span>
                 </div>
               </template>
-              <TaskDate :task="selectedTask" />
+              <TaskDate :task="selectedTask" @task-updated="fetchTasks" />
             </el-collapse-item>
             <el-collapse-item title="优先级" name="2">
               <template #title>
@@ -91,7 +91,7 @@
                   <span>任务状态</span>
                 </div>
               </template>
-              <TaskStatus :task="selectedTask" />
+              <TaskStatus :task="selectedTask" @task-updated="fetchTasks" />
             </el-collapse-item>
           </el-collapse>
         </el-col>
