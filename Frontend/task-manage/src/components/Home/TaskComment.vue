@@ -10,7 +10,7 @@
       </div>
       <div v-else v-for="comment in comments" :key="comment.id" class="comment-item">
         <div class="comment-header">
-          <span class="comment-author">{{ comment.owner?.username || '未知用户' }}</span>
+          <span class="comment-author">{{ comment.owner?.Username || '未知用户' }}</span>
           <span class="comment-time">{{ formatTime(comment.createdTime) }}</span>
           <el-button 
             v-if="canDeleteComment(comment)"
@@ -87,6 +87,8 @@ const fetchComments = async () => {
   try {
     const response = await getTaskComments(props.taskId)
     comments.value = response.data
+    console.log(comments.value);
+    
   } catch (error) {
     // 错误已由响应拦截器处理，这里可以添加额外的处理逻辑
     console.error('获取评论失败:', error)
