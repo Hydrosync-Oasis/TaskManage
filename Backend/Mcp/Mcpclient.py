@@ -20,9 +20,22 @@ def extract_user_id(token: str) -> int:
     key = jwt_config["Key"]
     issuer = jwt_config["Issuer"]
     audience = jwt_config["Audience"]
+#######
+    try:
+        # 解码 JWT
+        payload = jwt.decode(token, key, algorithms=["HS256"], issuer=issuer, audience=audience)
+        print(f"Decoded payload: {payload}")  # 打印解码后的 payload，检查是否包含 user_id 或 sub
+        user_id = int(
+            payload.get("uid") or
+            payload.get("sub") or
+            payload.get("http://schemas.xmlsoap.org/ws/2005/05/identity/claims/nameidentifier")
+        )
+        print(f"Extracted user_id: {user_id}")
+        return user_id
+    except Exception as e:
+        print(f"Error decoding JWT: {e}")
+        return None
 
-    payload = jwt.decode(token, key, algorithms=["HS256"], issuer=issuer, audience=audience)
-    return payload.get("uid")
 
 class MCPClient:
     def __init__(self, token: str, user_id: int, exit_stack: Optional[AsyncExitStack] = None):
