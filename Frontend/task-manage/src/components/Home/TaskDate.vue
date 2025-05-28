@@ -141,7 +141,7 @@ watch(() => props.task, (newTask) => {
   if (newTask) {
     if (newTask.deadline) {
       const deadline = new Date(newTask.deadline)
-      isOverdue.value = deadline < new Date() && newTask.taskStatus !== 2 // 2表示已完成
+      isOverdue.value = deadline < new Date() && newTask.status !== 2 // 2表示已完成
     } else {
       isOverdue.value = false
     }

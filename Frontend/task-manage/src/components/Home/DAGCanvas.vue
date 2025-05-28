@@ -1,16 +1,30 @@
 <template>
   <el-card class="dag-card">
-    <div class="dag-header">
-      <el-button 
-        type="primary" 
-        size="small" 
-        @click="showAddTaskDialog"
-        :disabled="!projectId"
+    <div class="dag-header-left">
+      <div class="button-group">
+        <el-button 
+          type="primary" 
+          size="small" 
+          @click="showAddTaskDialog"
+          :disabled="!projectId"
+        >
+          <el-icon><Plus /></el-icon>
+          添加任务
+        </el-button>
+      </div>
+    </div>
+    
+    <div class="dag-footer">
+      <el-button
+        type="info"
+        size="small"
+        @click="toggleAIChat"
       >
-        <el-icon><Plus /></el-icon>
-        添加任务
+        <el-icon><ChatDotRound /></el-icon>
+        {{ showAIChat ? '隐藏AI助手' : '显示AI助手' }}
       </el-button>
     </div>
+    
     <VueFlow 
       v-model="elements" 
       class="vue-flow-wrapper"
@@ -20,6 +34,33 @@
       <Controls />
       <MiniMap />
     </VueFlow>
+    
+    <div class="topo-order-container" v-if="topoGroups.length > 0">
+      <div class="topo-order">
+        <h3 class="topo-title">拓扑排序顺序</h3>
+        <div class="topo-groups">
+          <div 
+            v-for="(group, groupIndex) in topoGroups" 
+            :key="groupIndex" 
+            class="topo-group"
+            :class="{'group-even': groupIndex % 2 === 0, 'group-odd': groupIndex % 2 === 1}"
+          >
+            <div class="group-label">组 {{ groupIndex + 1 }}:</div>
+            <div class="group-tags">
+              <el-tag 
+                v-for="taskId in group" 
+                :key="taskId" 
+                size="small" 
+                class="topo-tag"
+                :type="groupIndex % 2 === 0 ? '' : 'info'"
+              >
+                {{ getTaskTitle(taskId) }}
+              </el-tag>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
     
     <!-- 添加任务对话框 -->
     <el-dialog
@@ -95,10 +136,11 @@ import '@vue-flow/core/dist/style.css'
 import '@vue-flow/core/dist/theme-default.css'
 import '@vue-flow/controls/dist/style.css'
 import '@vue-flow/minimap/dist/style.css'
-import { ref, watchEffect, nextTick } from 'vue'
+import { ref, watchEffect, nextTick, computed } from 'vue'
 import { ElMessage } from 'element-plus'
-import { Plus } from '@element-plus/icons-vue'
+import { Plus, ChatDotRound } from '@element-plus/icons-vue'
 import { createTask } from '@/api/task'
+import request from '@/utils/axios'
 
 export default {
   name: 'DAGCanvas',
@@ -108,6 +150,7 @@ export default {
     Controls,
     MiniMap,
     Plus,
+    ChatDotRound,
   },
   props: {
     tasks: {
@@ -117,9 +160,13 @@ export default {
     projectId: {
       type: [Number, String],
       default: null
+    },
+    showAIChat: {
+      type: Boolean,
+      default: true
     }
   },
-  emits: ['node-click', 'task-added'],
+  emits: ['node-click', 'task-added', 'toggle-ai-chat'],
   setup(props, { emit }) {
     // 连线默认配置
     const defaultEdgeOptions = {
@@ -197,6 +244,110 @@ export default {
       priority: [
         { required: true, message: '请选择优先级', trigger: 'change' }
       ]
+    }
+
+    // 拓扑排序结果 - 改为二维数组
+    const topoGroups = ref([])
+    const showAIChat = ref(true)
+    
+    // 获取任务标题的辅助函数
+    const getTaskTitle = (taskId) => {
+      const task = props.tasks.find(t => t.id === taskId)
+      return task ? task.title : `Task ${taskId}`
+    }
+    
+    // 切换AI聊天框显示状态
+    const toggleAIChat = () => {
+      showAIChat.value = !showAIChat.value
+      emit('toggle-ai-chat', showAIChat.value)
+    }
+    
+    // 从API获取拓扑排序结果
+    const fetchTopoOrder = async () => {
+      if (!props.projectId) {
+        topoGroups.value = []
+        return
+      }
+      
+      try {
+        const response = await request.get(`/api/Project/${props.projectId}/Tasks/Topological`)
+        if (response.data && Array.isArray(response.data)) {
+          topoGroups.value = response.data
+          console.log('拓扑排序结果(分组):', topoGroups.value)
+        }
+      } catch (error) {
+        console.error('获取拓扑排序失败:', error)
+        // 如果API调用失败，使用本地计算的拓扑排序作为备份
+        calculateTopoOrderLocally()
+      }
+    }
+    
+    // 本地计算拓扑排序（作为备份）
+    const calculateTopoOrderLocally = () => {
+      if (!props.tasks || props.tasks.length === 0) {
+        topoGroups.value = []
+        return
+      }
+      
+      // 创建邻接表表示图
+      const graph = {}
+      // 记录每个节点的入度
+      const inDegree = {}
+      
+      // 初始化
+      props.tasks.forEach(task => {
+        graph[task.id] = []
+        inDegree[task.id] = 0
+      })
+      
+      // 构建图和计算入度
+      props.tasks.forEach(task => {
+        if (task.dependencyTaskIds && Array.isArray(task.dependencyTaskIds)) {
+          task.dependencyTaskIds.forEach(depId => {
+            // 添加边: depId -> task.id
+            graph[depId].push(task.id)
+            // 增加task的入度
+            inDegree[task.id] = (inDegree[task.id] || 0) + 1
+          })
+        }
+      })
+      
+      // 拓扑排序结果 - 二维数组，每个子数组表示可并行执行的任务
+      const result = []
+      
+      // 当还有节点未处理时继续
+      while (Object.keys(inDegree).length > 0) {
+        // 找出所有入度为0的节点作为当前层
+        const currentLayer = []
+        Object.keys(inDegree).forEach(nodeId => {
+          if (inDegree[nodeId] === 0) {
+            currentLayer.push(parseInt(nodeId))
+            // 从入度表中移除
+            delete inDegree[nodeId]
+          }
+        })
+        
+        // 如果没有入度为0的节点但图中还有节点，说明有环
+        if (currentLayer.length === 0 && Object.keys(inDegree).length > 0) {
+          console.warn('图中存在环，无法完成拓扑排序')
+          break
+        }
+        
+        // 将当前层添加到结果中
+        if (currentLayer.length > 0) {
+          result.push(currentLayer)
+        }
+        
+        // 减少所有相邻节点的入度
+        currentLayer.forEach(node => {
+          graph[node].forEach(neighbor => {
+            inDegree[neighbor]--
+          })
+        })
+      }
+      
+      topoGroups.value = result
+      console.log('本地计算的拓扑排序结果:', result)
     }
 
     // 显示添加任务对话框
@@ -387,7 +538,7 @@ export default {
       return result
     }
 
-    // 当tasks属性变化时，更新流程图
+    // 当tasks属性变化时，获取拓扑排序
     watchEffect(() => {
       // 显式依赖 props.tasks 和每个task的 dependencyTaskIds 以确保变化时触发更新
       if (props.tasks) {
@@ -398,6 +549,9 @@ export default {
         
         // 输出调试信息
         console.log(`任务总数: ${props.tasks.length}, 依赖关系总数: ${dependencyCount}`)
+        
+        // 从API获取拓扑排序
+        fetchTopoOrder()
         
         if (props.tasks.length > 0) {
           // 先清空现有元素，确保重新生成
@@ -425,9 +579,11 @@ export default {
       } else if (props.projectId) {
         // 有项目ID但没有任务数据时，清空示例数据
         elements.value = []
+        topoGroups.value = []
       } else {
         // 没有项目ID时，使用示例数据
         elements.value = [...sampleElements]
+        topoGroups.value = []
       }
     })
 
@@ -454,7 +610,11 @@ export default {
       submitting,
       showAddTaskDialog,
       handleAddTask,
-      defaultEdgeOptions
+      defaultEdgeOptions,
+      topoGroups,
+      getTaskTitle,
+      toggleAIChat,
+      showAIChat
     }
   }
 }
@@ -467,11 +627,94 @@ export default {
   position: relative;
 }
 
-.dag-header {
+.dag-header-left {
   position: absolute;
   top: 10px;
+  left: 10px;
+  z-index: 10;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 10px;
+}
+
+.dag-footer {
+  position: absolute;
+  bottom: 10px;
   right: 10px;
   z-index: 10;
+}
+
+.button-group {
+  display: flex;
+  gap: 8px;
+}
+
+.topo-order-container {
+  position: absolute;
+  top: 60px;
+  left: 10px;
+  z-index: 10;
+  max-width: 300px;
+  max-height: 80%;
+  overflow-y: auto;
+}
+
+.topo-order {
+  background-color: rgba(255, 255, 255, 0.95);
+  padding: 12px;
+  border-radius: 8px;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.1);
+  border: 1px solid #e0e6ed;
+}
+
+.topo-title {
+  margin-top: 0;
+  margin-bottom: 10px;
+  font-size: 16px;
+  color: #303133;
+  text-align: center;
+  border-bottom: 1px solid #ebeef5;
+  padding-bottom: 8px;
+}
+
+.topo-groups {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.topo-group {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  padding: 8px;
+  border-radius: 6px;
+}
+
+.group-label {
+  font-weight: bold;
+  font-size: 14px;
+  color: #606266;
+}
+
+.group-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+}
+
+.group-even {
+  background-color: rgba(236, 245, 255, 0.7);
+}
+
+.group-odd {
+  background-color: rgba(246, 249, 252, 0.7);
+}
+
+.topo-tag {
+  margin-right: 0;
+  white-space: nowrap;
 }
 
 .vue-flow-wrapper {

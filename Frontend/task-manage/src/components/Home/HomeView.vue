@@ -95,7 +95,7 @@
             </el-collapse-item>
           </el-collapse>
         </el-col>
-        <el-col :span="13" class="center-panel">
+        <el-col :span="showAIChat ? 13 : 19" class="center-panel">
           <div class="project-info light-card" style="background: #f0f2f5; padding: 20px; margin-bottom: 20px; border-radius: 8px;">
             <div class="info-item">
               <span class="label">项目描述：</span>
@@ -134,11 +134,13 @@
               :projectId="selectedProject" 
               @node-click="handleTaskNodeClick" 
               @task-added="handleTaskAdded"
+              @toggle-ai-chat="handleToggleAIChat"
               :key="refreshKey"
+              :showAIChat="showAIChat"
             />
           </div>
         </el-col>
-        <el-col :span="6" class="right-panel light-card">
+        <el-col :span="6" class="right-panel light-card" v-if="showAIChat">
           <AIChat />
         </el-col>
       </el-row>
@@ -279,6 +281,7 @@ export default {
     const projectTasks = ref([])
     const tasks = ref([])
     const refreshKey = ref(0)
+    const showAIChat = ref(true)
 
     // 获取项目列表
     const fetchProjects = async () => {
@@ -558,6 +561,11 @@ export default {
       }
     }
 
+    // 处理切换AI聊天框显示状态
+    const handleToggleAIChat = (visible) => {
+      showAIChat.value = visible
+    }
+
     // 组件挂载时获取项目列表
     onMounted(() => {
       fetchProjects()
@@ -570,6 +578,8 @@ export default {
       currentProject,
       selectedTask,
       ownerName,
+      showAIChat,
+      handleToggleAIChat,
       handleProjectChange,
       handleDeleteProject,
       handleTaskNodeClick,
