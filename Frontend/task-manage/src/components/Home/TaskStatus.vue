@@ -27,9 +27,10 @@
 </template>
 
 <script setup>
-import { ref, watch } from 'vue'
+import { ref, computed, watch } from 'vue'
 import { ElMessage } from 'element-plus'
 import { updateTask } from '@/api/task'
+import { getUserIdFromToken, getUserRoleFromToken } from '@/utils/jwtUtils'
 
 /* eslint-disable no-undef */
 const props = defineProps({
@@ -88,15 +89,16 @@ const handleStatusChange = async () => {
   }
 }
 
-// 当任务变化时，更新选中的状态
+// 当任务变化时，更新状态和权限
 watch(() => props.task, (newTask) => {
   if (newTask) {
     selectedStatus.value = newTask.status
     
-    // 检查是否有权限更新状态（这里可以根据实际权限逻辑调整）
-    const currentUserId = localStorage.getItem('userId')
+    // 检查是否有权限更新状态
+    const currentUserId = getUserIdFromToken()
+    const userRole = getUserRoleFromToken()
     canUpdateStatus.value = newTask.createUserId === parseInt(currentUserId) || 
-                           localStorage.getItem('userRole') === 'ProjectAdmin'
+                           userRole === 'ProjectAdmin'
   } else {
     selectedStatus.value = ''
     canUpdateStatus.value = false
@@ -138,4 +140,4 @@ watch(() => props.task, (newTask) => {
   padding: 20px 0;
   font-style: italic;
 }
-</style> 
+</style>

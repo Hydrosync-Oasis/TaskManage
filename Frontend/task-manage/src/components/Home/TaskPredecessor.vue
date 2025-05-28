@@ -48,16 +48,20 @@
 </template>
 
 <script setup>
-import { ref, computed, watch } from 'vue'
+import { ref, computed, watch, onMounted } from 'vue'
 import { ElMessage } from 'element-plus'
-// 移除未使用的导入
-// import { updateTask } from '@/api/task'
+import { getTaskInfo, updateTask } from '@/api/task'
+import { getUserIdFromToken, getUserRoleFromToken } from '@/utils/jwtUtils'
 
 /* eslint-disable no-undef */
 const props = defineProps({
   task: {
     type: Object,
     default: null
+  },
+  allTasks: {
+    type: Array,
+    default: () => []
   }
 })
 /* eslint-enable no-undef */
@@ -76,26 +80,34 @@ const hasDependencies = computed(() => {
 const availableTasks = computed(() => {
   if (!props.task) return []
   
-  // 这里应该是从父组件传入的所有任务列表
-  // 为了演示，我们使用模拟数据
-  const allTasks = [
-    { id: 1, title: '需求分析' },
-    { id: 2, title: '系统设计' },
-    { id: 3, title: '前端开发' },
-    { id: 4, title: '后端开发' },
-    { id: 5, title: '测试' }
-  ]
-  
-  // 排除自己和已有的依赖
-  return allTasks.filter(task => {
+  // 使用从父组件传入的所有任务列表
+  return props.allTasks.filter(task => {
     // 排除自己
     if (task.id === props.task.id) return false
     
     // 排除已有的依赖
-    const alreadyDependent = dependentNodes.value.some(dep => dep.id === task.id)
+    const alreadyDependent = props.task.dependencyTaskIds && 
+                           props.task.dependencyTaskIds.includes(task.id)
     return !alreadyDependent
   })
 })
+
+// 获取前驱任务的详细信息
+const fetchDependentTasksInfo = async () => {
+  if (!props.task || !props.task.dependencyTaskIds || !props.task.dependencyTaskIds.length) {
+    dependentNodes.value = []
+    return
+  }
+  
+  try {
+    const promises = props.task.dependencyTaskIds.map(id => getTaskInfo(id))
+    const responses = await Promise.all(promises)
+    dependentNodes.value = responses.map(res => res.data)
+  } catch (error) {
+    console.error('获取前驱任务详情失败:', error)
+    ElMessage.error('获取前驱任务详情失败')
+  }
+}
 
 // 处理添加前驱节点
 const handleAddDependency = async () => {
@@ -103,14 +115,21 @@ const handleAddDependency = async () => {
   
   updating.value = true
   try {
-    // 这里应该调用API添加依赖关系
-    // 为了演示，我们直接更新本地数据
-    const newDependency = availableTasks.value.find(task => task.id === selectedDependency.value)
-    if (newDependency) {
-      dependentNodes.value.push(newDependency)
-      ElMessage.success('前驱节点添加成功')
-      selectedDependency.value = ''
+    // 准备更新的数据
+    const taskData = {
+      id: props.task.id,
+      dependencyTaskIds: [...(props.task.dependencyTaskIds || []), selectedDependency.value]
     }
+    
+    // 调用API更新任务
+    await updateTask(taskData)
+    
+    // 更新本地状态
+    ElMessage.success('前驱节点添加成功')
+    selectedDependency.value = ''
+    
+    // 触发父组件刷新任务列表
+    emit('task-updated')
   } catch (error) {
     ElMessage.error('添加前驱节点失败')
     console.error('添加前驱节点失败:', error)
@@ -125,10 +144,20 @@ const handleRemoveDependency = async (dependency) => {
   
   updating.value = true
   try {
-    // 这里应该调用API移除依赖关系
-    // 为了演示，我们直接更新本地数据
-    dependentNodes.value = dependentNodes.value.filter(dep => dep.id !== dependency.id)
+    // 准备更新的数据
+    const taskData = {
+      id: props.task.id,
+      dependencyTaskIds: (props.task.dependencyTaskIds || []).filter(id => id !== dependency.id)
+    }
+    
+    // 调用API更新任务
+    await updateTask(taskData)
+    
+    // 更新本地状态
     ElMessage.success('前驱节点移除成功')
+    
+    // 触发父组件刷新任务列表
+    emit('task-updated')
   } catch (error) {
     ElMessage.error('移除前驱节点失败')
     console.error('移除前驱节点失败:', error)
@@ -137,20 +166,24 @@ const handleRemoveDependency = async (dependency) => {
   }
 }
 
-// 当任务变化时，更新前驱节点数据
+// 当任务变化时，获取前驱节点数据
 watch(() => props.task, (newTask) => {
   if (newTask) {
-    dependentNodes.value = newTask.dependentNodes || []
+    fetchDependentTasksInfo()
     
-    // 检查是否有权限更新前驱节点（这里可以根据实际权限逻辑调整）
-    const currentUserId = localStorage.getItem('userId')
+    // 检查是否有权限更新前驱节点（使用jwtUtils获取用户信息）
+    const currentUserId = getUserIdFromToken()
+    const userRole = getUserRoleFromToken()
     canUpdateDependencies.value = newTask.createUserId === parseInt(currentUserId) || 
-                                 localStorage.getItem('userRole') === 'ProjectAdmin'
+                                userRole === 'ProjectAdmin'
   } else {
     dependentNodes.value = []
     canUpdateDependencies.value = false
   }
 }, { immediate: true })
+
+// 定义emit以便通知父组件任务已更新
+const emit = defineEmits(['task-updated'])
 </script>
 
 <style scoped>
@@ -159,22 +192,30 @@ watch(() => props.task, (newTask) => {
 }
 
 .task-info {
-  background-color: #f5f7fa;
+  background-color: #f8fafc;
   border-radius: 8px;
   padding: 15px;
-  border: 1px solid #e4e7ed;
+  border: 1px solid #e0e6ed;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+  transition: all 0.3s ease;
 }
 
 .section-title {
-  font-weight: bold;
-  color: #606266;
-  margin-bottom: 10px;
+  font-weight: 600;
+  color: #3182ce;
+  margin-bottom: 12px;
+  font-size: 14px;
 }
 
 .no-dependencies {
-  color: #909399;
+  color: #64748b;
   font-style: italic;
-  padding: 10px 0;
+  padding: 12px 0;
+  text-align: center;
+  background-color: #f1f5f9;
+  border-radius: 6px;
+  margin-bottom: 15px;
+  border: 1px dashed #cbd5e1;
 }
 
 .dependency-update {
@@ -187,9 +228,54 @@ watch(() => props.task, (newTask) => {
 }
 
 .no-task {
-  color: #909399;
+  color: #64748b;
   text-align: center;
-  padding: 20px 0;
+  padding: 24px 0;
   font-style: italic;
+  background-color: #f1f5f9;
+  border-radius: 8px;
+  border: 1px dashed #cbd5e1;
 }
-</style> 
+
+/* 表格样式优化 */
+:deep(.el-table) {
+  border-radius: 6px;
+  overflow: hidden;
+  --el-table-border-color: #e2e8f0;
+  margin-bottom: 15px;
+}
+
+:deep(.el-table__header) {
+  background-color: #f1f5f9;
+}
+
+:deep(.el-table__row:hover) {
+  background-color: #f1f5f9;
+}
+
+:deep(.el-button.el-button--danger) {
+  background-color: #fee2e2;
+  border-color: #fee2e2;
+  color: #ef4444;
+}
+
+:deep(.el-button.el-button--danger:hover) {
+  background-color: #fecaca;
+  border-color: #fecaca;
+}
+
+:deep(.el-divider__text) {
+  background-color: #f8fafc;
+  color: #64748b;
+  font-size: 13px;
+}
+
+:deep(.el-select) {
+  width: 100%;
+}
+
+:deep(.el-button--primary) {
+  width: 100%;
+  margin-top: 12px;
+}
+</style>

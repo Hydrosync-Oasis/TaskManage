@@ -514,7 +514,11 @@ export default {
       
       try {
         const res = await getProjectTasks(selectedProject.value.id)
+        // 更新所有任务列表
         tasks.value = res.data
+        // 同步更新流程图使用的任务数据
+        projectTasks.value = res.data
+        
         // 如果存在已选择的任务，需要刷新选择的任务信息
         if (selectedTask.value) {
           const updatedTask = res.data.find(task => task.id === selectedTask.value.id)
@@ -522,6 +526,9 @@ export default {
             selectedTask.value = updatedTask
           }
         }
+        
+        // 添加成功信息提示
+        ElMessage.success('任务数据已更新')
       } catch (error) {
         console.error('获取任务列表失败:', error)
         ElMessage.error('获取任务列表失败')
