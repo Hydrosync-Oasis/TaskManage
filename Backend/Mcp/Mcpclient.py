@@ -20,9 +20,22 @@ def extract_user_id(token: str) -> int:
     key = jwt_config["Key"]
     issuer = jwt_config["Issuer"]
     audience = jwt_config["Audience"]
+#######
+    try:
+        # 解码 JWT
+        payload = jwt.decode(token, key, algorithms=["HS256"], issuer=issuer, audience=audience)
+        print(f"Decoded payload: {payload}")  # 打印解码后的 payload，检查是否包含 user_id 或 sub
+        user_id = int(
+            payload.get("uid") or
+            payload.get("sub") or
+            payload.get("http://schemas.xmlsoap.org/ws/2005/05/identity/claims/nameidentifier")
+        )
+        print(f"Extracted user_id: {user_id}")
+        return user_id
+    except Exception as e:
+        print(f"Error decoding JWT: {e}")
+        return None
 
-    payload = jwt.decode(token, key, algorithms=["HS256"], issuer=issuer, audience=audience)
-    return payload.get("uid")
 
 class MCPClient:
     def __init__(self, token: str, user_id: int, exit_stack: Optional[AsyncExitStack] = None):
@@ -74,7 +87,7 @@ async def main(query: str, token: str):
         await client.cleanup()
 
 if __name__ == "__main__":
-    query = ("获取一下现在所有的项目列表")
     token = token = input("请输入您的 JWT Token：\n")
+    query = ("获取一下现在所有的项目列表")
     asyncio.run(main(query, token))
 
