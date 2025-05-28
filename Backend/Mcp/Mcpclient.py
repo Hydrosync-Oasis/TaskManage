@@ -14,7 +14,7 @@ from langchain_core.messages.ai import AIMessage
 sys.stdout.reconfigure(encoding='utf-8')
 
 def extract_user_id(token: str) -> int:
-    with open(r"..\Backend\TaskManage\TaskManage\Properties\appsettings.json", "r") as f:
+    with open(r"..\TaskManage\TaskManage\Properties\appsettings .json", "r") as f:
         config = json.load(f)
     jwt_config = config["Jwt"]
     key = jwt_config["Key"]
@@ -31,7 +31,7 @@ class MCPClient:
         self.session: Optional[ClientSession] = None
         self.exit_stack = exit_stack if exit_stack else AsyncExitStack()
         self.llm = ChatOpenAI(
-            api_key="*******",
+            api_key="*************",
             base_url="https://dashscope.aliyuncs.com/compatible-mode/v1",
             model="qwen-max"
         )
@@ -67,14 +67,14 @@ async def main(query: str, token: str):
         user_id = extract_user_id(token)
         client = MCPClient(token, user_id)
         await client.connect_to_server(
-            ".\\Mcpserver.py"
+            "..\\Mcpserver.py"
         )
         res = await client.process_query(query)
         print(res)
         await client.cleanup()
 
 if __name__ == "__main__":
-    query = "获取所有项目"
+    query = ("你能使用那些工具函数")
     token = token = input("请输入您的 JWT Token：\n")
     asyncio.run(main(query, token))
 

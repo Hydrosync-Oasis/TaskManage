@@ -8,8 +8,10 @@ from datetime import datetime
 from pydantic import BaseModel
 from typing import List
 
+import os
+
 # 从 appsettings.json 加载 JWT 配置
-with open(r"..\TaskManage\TaskManage\Properties\appsettings.json", "r") as f:
+with open(r"..\TaskManage\TaskManage\Properties\appsettings .json", "r") as f:
     jwt_config = json.load(f)["Jwt"]
 
 SECRET_KEY = jwt_config["Key"]
@@ -23,24 +25,34 @@ user_tokens: Dict[int, str] = {}
 
 mcp = FastMCP("project-management")
 
-async def get_user_id_from_token(request: Request) -> int:
-    token = request.headers.get("Authorization")
+import os
+
+
+async def get_user_id_from_token(request: Request = None) -> int:
+    token = None
+    if request:
+        token = request.headers.get("Authorization")
+
+    if not token:
+        token = os.environ.get("AUTH_TOKEN")
+        if token and not token.startswith("Bearer "):
+            token = "Bearer " + token
+
     if not token or not token.startswith("Bearer "):
-        raise HTTPException(status_code=401, detail="缺少或错误的认证信息")
+        raise HTTPException(status_code=401, detail="Missing or invalid token")
 
     token_value = token.split(" ")[1]
     try:
         payload = jwt.decode(token_value, SECRET_KEY, algorithms=[ALGORITHM], audience=AUDIENCE, issuer=ISSUER)
         user_id = payload.get("uid")
-        if user_id is None:
-            raise HTTPException(status_code=401, detail="Token中不包含用户ID")
+        if not user_id:
+            raise HTTPException(status_code=401, detail="Token missing user id")
         user_clients[user_id] = f"Client for user {user_id}"
-        user_tokens[user_id] = token  # 存原始 Bearer token
-        return user_id
+        user_tokens[user_id] = token
+        return int(user_id)
     except JWTError as e:
-        raise HTTPException(status_code=401, detail=f"Token解码失败: {str(e)}")
+        raise HTTPException(status_code=401, detail=f"Token decode failed: {e}")
 
-# ---------------- Schema ------------------
 
 class ProjectCreateRequest(BaseModel):
     id: int
@@ -153,3 +165,6 @@ async def get_task_comments(id: int, user_id: int = Depends(get_user_id_from_tok
     resp = requests.get(url, headers={"Authorization": user_tokens[user_id]})
     return resp.text if resp.status_code == 200 else f"获取失败: {resp.text}"
 
+if __name__ == "__main__":
+
+    mcp.run()
