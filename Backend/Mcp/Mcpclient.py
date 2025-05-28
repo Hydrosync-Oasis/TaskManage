@@ -74,7 +74,7 @@ async def main(query: str, token: str):
         await client.cleanup()
 
 if __name__ == "__main__":
-    query = ("你能使用那些工具函数")
     token = token = input("请输入您的 JWT Token：\n")
+    query = input("请输入您的问题：\n")
     asyncio.run(main(query, token))
 
