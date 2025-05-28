@@ -1,7 +1,7 @@
 import requests
 import json
 from mcp.server.fastmcp import FastMCP
-from fastapi import Request, HTTPException
+from fastapi import Request, HTTPException, Depends
 from jose import JWTError, jwt
 from typing import Dict
 
@@ -10,7 +10,7 @@ from pydantic import BaseModel
 from typing import List
 
 # 从 appsettings.json 加载 JWT 配置
-with open(r"Backend\TaskManage\TaskManage\Properties\appsettings .json", "r") as f:
+with open(r"..\TaskManage\TaskManage\Properties\appsettings.json", "r") as f:
     jwt_config = json.load(f)["Jwt"]
 
 SECRET_KEY = jwt_config["Key"]
@@ -22,6 +22,9 @@ ISSUER = jwt_config["Issuer"]
 user_clients: Dict[int, str] = {}
 
 mcp = FastMCP("project-management")
+
+def inject_request(request: Request) -> Request:
+    return request
 
 async def get_user_id_from_token(request: Request) -> int:
     token = request.headers.get("Authorization")
@@ -46,12 +49,9 @@ class ProjectCreateRequest(BaseModel):
     description: str
     ownerUid: int
     createdAt: datetime
-class ProjectUpdateRequest(BaseModel):
-    id: int
-    name: str
-    description: str
-    ownerUid: int
-    createdAt: datetime
+
+class ProjectUpdateRequest(ProjectCreateRequest):
+    pass
 
 class TaskCreateRequest(BaseModel):
     id: int
@@ -72,113 +72,75 @@ class CommentAddRequest(BaseModel):
     content: str
     createdTime: datetime
 
-class TaskUpdateRequest(BaseModel):
-    id: int
-    title: str
-    description: str
-    deadline: datetime  # 使用 datetime 类型
-    status: int
-    priority: int
-    projectId: int
-    assignedUid: int
-    createUserId: int
-    dependencyTaskIds: List[int]
+class TaskUpdateRequest(TaskCreateRequest):
+    pass
 
-# project接口
 @mcp.tool()
-async def create_project(request: Request, body: ProjectCreateRequest) -> str:
+async def create_project(body: ProjectCreateRequest, request: Request = Depends(inject_request)) -> str:
     user_id = await get_user_id_from_token(request)
-    print(f"User ID {user_id} is creating a new project.")
     url = "http://localhost:7062/api/Project/Create"
-    resp = requests.post(
-        url,
-        json=body.model_dump(),
-        headers={"Authorization": request.headers.get("Authorization")}
-    )
+    resp = requests.post(url, json=body.model_dump(), headers={"Authorization": request.headers.get("Authorization")})
     return "项目创建成功" if resp.status_code == 200 else f"创建失败: {resp.text}"
 
 @mcp.tool()
-async def get_all_projects(request: Request) -> str:
+async def get_all_projects(request: Request = Depends(inject_request)) -> str:
     user_id = await get_user_id_from_token(request)
-    print(f"User ID {user_id} is fetching all projects.")
     url = "https://localhost:7062/api/Project/AllProjects"
     resp = requests.get(url, headers={"Authorization": request.headers.get("Authorization")})
     return resp.text if resp.status_code == 200 else f"获取失败: {resp.text}"
 
 @mcp.tool()
-async def get_project_by_id(request: Request, id: int) -> str:
+async def get_project_by_id(id: int, request: Request = Depends(inject_request)) -> str:
     user_id = await get_user_id_from_token(request)
-    print(f"User ID {user_id} is fetching project with ID: {id}.")
     url = f"https://localhost:7062/api/Project/{id}"
     resp = requests.get(url, headers={"Authorization": request.headers.get("Authorization")})
     return resp.text if resp.status_code == 200 else f"获取失败: {resp.text}"
 
 @mcp.tool()
-async def update_project(request: Request, body: ProjectUpdateRequest) -> str:
+async def update_project(body: ProjectUpdateRequest, request: Request = Depends(inject_request)) -> str:
     user_id = await get_user_id_from_token(request)
-    print(f"User ID {user_id} is updating project with ID: {body.id}.")
     url = f"https://localhost:7062/api/Project/Update/{body.id}"
-    resp = requests.put(
-        url,
-        json=body.model_dump(),
-        headers={"Authorization": request.headers.get("Authorization")}
-    )
+    resp = requests.put(url, json=body.model_dump(), headers={"Authorization": request.headers.get("Authorization")})
     return "项目信息更新成功" if resp.status_code == 200 else f"更新失败: {resp.text}"
 
 @mcp.tool()
-async def delete_project(request: Request, id: int) -> str:
+async def delete_project(id: int, request: Request = Depends(inject_request)) -> str:
     user_id = await get_user_id_from_token(request)
-    print(f"User ID {user_id} is deleting project with ID: {id}.")
     url = f"https://localhost:7062/api/Project/Delete/{id}"
     resp = requests.delete(url, headers={"Authorization": request.headers.get("Authorization")})
     return "删除成功" if resp.status_code == 200 else f"删除失败: {resp.text}"
 
 @mcp.tool()
-async def get_project_tasks(request: Request, id: int) -> str:
+async def get_project_tasks(id: int, request: Request = Depends(inject_request)) -> str:
     user_id = await get_user_id_from_token(request)
-    print(f"User ID {user_id} is fetching tasks for project ID: {id}.")
     url = f"https://localhost:7062/api/Project/{id}/Tasks"
     resp = requests.get(url, headers={"Authorization": request.headers.get("Authorization")})
     return resp.text if resp.status_code == 200 else f"获取失败: {resp.text}"
 
-#task接口
 @mcp.tool()
-async def create_task(request: Request, body: TaskCreateRequest) -> str:
+async def create_task(body: TaskCreateRequest, request: Request = Depends(inject_request)) -> str:
     user_id = await get_user_id_from_token(request)
-    print(f"User ID {user_id} is creating a new task.")
     url = "https://localhost:7062/api/Task/Add"
-    resp = requests.post(
-        url,
-        json=body.model_dump(),
-        headers={"Authorization": request.headers.get("Authorization")}
-    )
+    resp = requests.post(url, json=body.model_dump(), headers={"Authorization": request.headers.get("Authorization")})
     return "任务创建成功" if resp.status_code == 200 else f"创建失败: {resp.text}"
 
-
 @mcp.tool()
-async def update_task(request: Request, body: TaskUpdateRequest) -> str:
+async def update_task(body: TaskUpdateRequest, request: Request = Depends(inject_request)) -> str:
     user_id = await get_user_id_from_token(request)
-    print(f"User ID {user_id} is updating task with ID: {body.id}.")
     url = "https://localhost:7062/api/Task/Update"
-    resp = requests.put(
-        url,
-        json=body.model_dump(),  # 使用 model_dump()
-        headers={"Authorization": request.headers.get("Authorization")}
-    )
+    resp = requests.put(url, json=body.model_dump(), headers={"Authorization": request.headers.get("Authorization")})
     return "任务信息更新成功" if resp.status_code == 200 else f"更新失败: {resp.text}"
 
 @mcp.tool()
-async def delete_task(request: Request, id: int) -> str:
+async def delete_task(id: int, request: Request = Depends(inject_request)) -> str:
     user_id = await get_user_id_from_token(request)
-    print(f"User ID {user_id} is deleting task with ID: {id}.")
     url = f"https://localhost:7062/api/Task/Delete/{id}"
     resp = requests.delete(url, headers={"Authorization": request.headers.get("Authorization")})
     return "删除成功" if resp.status_code == 200 else f"删除失败: {resp.text}"
 
 @mcp.tool()
-async def get_comment(request: Request, id: int) -> str:
+async def get_comment(id: int, request: Request = Depends(inject_request)) -> str:
     user_id = await get_user_id_from_token(request)
-    print(f"User ID {user_id} is fetching comment with ID: {id}.")
     url = f"https://localhost:7062/api/Comment/{id}"
     resp = requests.get(url, headers={"Authorization": request.headers.get("Authorization")})
     if resp.status_code == 200:
@@ -189,22 +151,15 @@ async def get_comment(request: Request, id: int) -> str:
         return f"获取失败: {resp.text}"
 
 @mcp.tool()
-async def add_comment(request: Request, body: CommentAddRequest) -> str:
+async def add_comment(body: CommentAddRequest, request: Request = Depends(inject_request)) -> str:
     user_id = await get_user_id_from_token(request)
-    print(f"User ID {user_id} is adding a comment.")
     url = "https://localhost:7062/api/Comment/Add"
-    resp = requests.post(
-        url,
-        json=body.model_dump(),
-        headers={"Authorization": request.headers.get("Authorization")}
-    )
+    resp = requests.post(url, json=body.model_dump(), headers={"Authorization": request.headers.get("Authorization")})
     return "评论添加成功" if resp.status_code == 200 else f"添加失败: {resp.text}"
 
-
 @mcp.tool()
-async def get_task_comments(request: Request, id: int) -> str:
+async def get_task_comments(id: int, request: Request = Depends(inject_request)) -> str:
     user_id = await get_user_id_from_token(request)
-    print(f"User ID {user_id} is fetching comments for task ID: {id}.")
     url = f"https://localhost:7062/api/Task/{id}/Comments"
     resp = requests.get(url, headers={"Authorization": request.headers.get("Authorization")})
     return resp.text if resp.status_code == 200 else f"获取失败: {resp.text}"
