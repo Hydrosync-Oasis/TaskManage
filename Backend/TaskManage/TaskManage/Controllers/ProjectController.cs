@@ -1,3 +1,4 @@
+using System.Linq.Expressions;
 using System.Security.Claims;
 using Application.DTOs;
 using Application.Interfaces;
@@ -130,6 +131,18 @@ namespace TaskManage.Controllers
             catch (Exception ex)
             {
                 return StatusCode(500, new { message = "获取任务列表失败", error = ex.Message });
+            }
+        }
+
+        [HttpGet("{id:int}/Tasks/Topological")]
+        public async Task<IActionResult> GetTopologicalOrder(int id) {
+            try {
+                var res = await projectService.GetTopologicalOrder(id);
+                return Ok(res);
+            } catch (ArgumentOutOfRangeException e) {
+                return NotFound(e.Message);
+            } catch (Exception ex) {
+                return StatusCode(500, ex.Message);
             }
         }
     }

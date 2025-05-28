@@ -11,7 +11,7 @@ from typing import List
 import os
 
 # 从 appsettings.json 加载 JWT 配置
-with open(r"..\TaskManage\TaskManage\Properties\appsettings .json", "r") as f:
+with open(r"..\TaskManage\TaskManage\appsettings.json", "r") as f:
     jwt_config = json.load(f)["Jwt"]
 
 SECRET_KEY = jwt_config["Key"]
