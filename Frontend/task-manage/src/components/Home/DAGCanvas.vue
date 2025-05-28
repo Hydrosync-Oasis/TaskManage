@@ -49,7 +49,7 @@
             <div class="group-tags">
               <el-tag 
                 v-for="taskId in group" 
-                :key="taskId" 
+                :key="getTaskId(taskId)" 
                 size="small" 
                 class="topo-tag"
                 :type="groupIndex % 2 === 0 ? '' : 'info'"
@@ -221,6 +221,8 @@ export default {
     
     // 初始化为空数组
     const elements = ref([])
+    // 当前选中的节点ID
+    const selectedNodeId = ref(null)
 
     // 添加任务相关变量
     const addTaskDialogVisible = ref(false)
@@ -252,8 +254,21 @@ export default {
     
     // 获取任务标题的辅助函数
     const getTaskTitle = (taskId) => {
+      // 如果taskId是对象且有title属性，说明后端返回的是整个TaskDto对象
+      if (taskId && typeof taskId === 'object' && taskId.title !== undefined) {
+        return taskId.title
+      }
+      // 否则taskId就是任务ID
       const task = props.tasks.find(t => t.id === taskId)
       return task ? task.title : `Task ${taskId}`
+    }
+    
+    // 获取任务ID的辅助函数
+    const getTaskId = (taskId) => {
+      if (taskId && typeof taskId === 'object' && taskId.id !== undefined) {
+        return taskId.id
+      }
+      return taskId
     }
     
     // 切换AI聊天框显示状态
@@ -497,6 +512,17 @@ export default {
           style = { ...style, backgroundColor: '#ecf5ff', color: '#409eff' }
           className += ' in-progress'
         }
+
+        // 如果是选中的节点，添加高亮样式
+        if (String(task.id) === selectedNodeId.value) {
+          style = { 
+            ...style, 
+            boxShadow: '0 0 0 3px #409eff, 0 4px 12px rgba(0, 0, 0, 0.15)',
+            transform: 'translateY(-2px)',
+            zIndex: 1000
+          }
+          className += ' selected-node'
+        }
         
         return {
           id: String(task.id),
@@ -595,6 +621,14 @@ export default {
       const taskData = props.tasks.find(task => String(task.id) === node.id)
       
       if (taskData) {
+        // 设置选中的节点ID
+        selectedNodeId.value = node.id
+        
+        // 重新生成节点以应用高亮样式
+        const nodes = generateNodes()
+        const edges = generateEdges()
+        elements.value = [...nodes, ...edges]
+        
         // 向父组件发送点击事件，传递选中的任务数据
         emit('node-click', taskData)
       }
@@ -613,6 +647,7 @@ export default {
       defaultEdgeOptions,
       topoGroups,
       getTaskTitle,
+      getTaskId,
       toggleAIChat,
       showAIChat
     }
@@ -656,7 +691,7 @@ export default {
   left: 10px;
   z-index: 10;
   max-width: 300px;
-  max-height: 80%;
+  max-height: 400px;
   overflow-y: auto;
 }
 
@@ -682,6 +717,8 @@ export default {
   display: flex;
   flex-direction: column;
   gap: 10px;
+  max-height: 320px;
+  overflow-y: auto;
 }
 
 .topo-group {
@@ -767,6 +804,12 @@ export default {
 :deep(.in-progress) {
   background-color: #ecf5ff;
   color: #409eff;
+}
+
+:deep(.selected-node) {
+  box-shadow: 0 0 0 3px #409eff, 0 4px 12px rgba(0, 0, 0, 0.15) !important;
+  transform: translateY(-2px) !important;
+  z-index: 1000 !important;
 }
 
 @keyframes dashdraw {
