@@ -138,11 +138,8 @@ namespace Application.Services
 
         public async Task<Comment?> GetCommentByIdAsync(int id)
         {
-            var comments = await commentRepository.GetAllCommentsByTaskIdAsync(id);
-            var comment = comments.FirstOrDefault(c => c.Id == id);
-            return comment;
+            return await commentRepository.GetCommentByIdAsync(id);
         }
-
 
         public Task DeleteCommentAsync(int id)
         {

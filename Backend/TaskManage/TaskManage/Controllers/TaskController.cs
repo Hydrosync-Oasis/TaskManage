@@ -145,24 +145,21 @@ namespace TaskManage.Controllers
         public async Task<IActionResult> DeleteComment(int id)
         {
             var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier);
-            if (userIdClaim == null)
-                return Unauthorized(new { error = "用户身份无效" });
-
-            if (!int.TryParse(userIdClaim.Value, out int userId))
+            if (userIdClaim == null || !int.TryParse(userIdClaim.Value, out int userId))
                 return Unauthorized(new { error = "用户身份无效" });
 
             try
             {
+                // 从服务层获取评论，可能为空
                 var comment = await taskService.GetCommentByIdAsync(id);
                 if (comment == null)
-                    return NotFound(new { error = "评论不存在" });
+                    return NotFound(new { error = $"找不到ID为 {id} 的评论" });
 
                 var user = await userService.GetUserById(userId);
 
                 // 判断角色权限
                 bool isSystemAdmin = user.UserRole == UserRole.Admin;
                 bool isProjectAdmin = user.UserRole == UserRole.ProjectAdmin;
-
                 bool isOwner = comment.Owner.Id == userId;
 
                 if (!isSystemAdmin && !isProjectAdmin && !isOwner)

@@ -134,6 +134,7 @@
               :projectId="selectedProject" 
               @node-click="handleTaskNodeClick" 
               @task-added="handleTaskAdded"
+              :key="refreshKey"
             />
           </div>
         </el-col>
@@ -277,6 +278,7 @@ export default {
     })
     const projectTasks = ref([])
     const tasks = ref([])
+    const refreshKey = ref(0)
 
     // 获取项目列表
     const fetchProjects = async () => {
@@ -510,25 +512,46 @@ export default {
 
     // 获取任务
     const fetchTasks = async () => {
-      if (!selectedProject.value || !selectedProject.value.id) return
+      if (!selectedProject.value) return
       
       try {
-        const res = await getProjectTasks(selectedProject.value.id)
-        // 更新所有任务列表
-        tasks.value = res.data
-        // 同步更新流程图使用的任务数据
-        projectTasks.value = res.data
+        console.log('开始获取最新任务数据...')
         
-        // 如果存在已选择的任务，需要刷新选择的任务信息
-        if (selectedTask.value) {
-          const updatedTask = res.data.find(task => task.id === selectedTask.value.id)
-          if (updatedTask) {
-            selectedTask.value = updatedTask
+        // 先清空当前数据，避免旧数据显示
+        tasks.value = []
+        projectTasks.value = []
+        
+        // 强制先清空数据后重新渲染一次
+        refreshKey.value += 1
+        
+        // 使用setTimeout确保上面的清空操作在UI上生效
+        setTimeout(async () => {
+          try {
+            const res = await getProjectTasks(selectedProject.value)
+            console.log(`获取到${res.data.length}个任务`)
+            
+            // 更新所有任务列表
+            tasks.value = JSON.parse(JSON.stringify(res.data))
+            // 同步更新流程图使用的任务数据
+            projectTasks.value = JSON.parse(JSON.stringify(res.data))
+            
+            // 如果存在已选择的任务，需要刷新选择的任务信息
+            if (selectedTask.value) {
+              const updatedTask = res.data.find(task => task.id === selectedTask.value.id)
+              if (updatedTask) {
+                selectedTask.value = JSON.parse(JSON.stringify(updatedTask))
+              }
+            }
+            
+            // 强制流程图重新渲染
+            refreshKey.value += 1
+            
+            console.log('任务数据更新完成')
+          } catch (error) {
+            console.error('获取任务列表失败:', error)
+            ElMessage.error('获取任务列表失败')
           }
-        }
-        
-        // 添加成功信息提示
-        ElMessage.success('任务数据已更新')
+        }, 100)
       } catch (error) {
         console.error('获取任务列表失败:', error)
         ElMessage.error('获取任务列表失败')
@@ -568,7 +591,8 @@ export default {
       handleTaskAdded,
       fetchProjectTasks,
       tasks,
-      fetchTasks
+      fetchTasks,
+      refreshKey
     }
   }
 }

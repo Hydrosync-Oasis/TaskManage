@@ -28,8 +28,16 @@ namespace Infrastructure.Repository {
         public async Task AddAsync(Comment comment)
         {
             await dbContext.Comments.AddAsync(comment);
-            await dbContext.SaveChangesAsync();  // 一定要调用这个，才能提交事务
+            await dbContext.SaveChangesAsync();  
         }
+
+
+        public async Task<Comment?> GetCommentByIdAsync(int id)
+        {
+            return await dbContext.Comments.FirstOrDefaultAsync(c => c.Id == id);
+        }
+
+
 
     }
 }

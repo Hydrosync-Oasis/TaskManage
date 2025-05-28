@@ -7,5 +7,7 @@ namespace Domain.Repository {
         public Task DeleteByCommentIdAsync(int id);
         public Task AddAsync(Comment comment);
 
+        public Task<Comment?> GetCommentByIdAsync(int id);
+
     }
 }

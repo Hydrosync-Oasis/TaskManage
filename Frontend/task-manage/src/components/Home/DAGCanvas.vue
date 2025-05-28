@@ -95,7 +95,7 @@ import '@vue-flow/core/dist/style.css'
 import '@vue-flow/core/dist/theme-default.css'
 import '@vue-flow/controls/dist/style.css'
 import '@vue-flow/minimap/dist/style.css'
-import { ref, watchEffect } from 'vue'
+import { ref, watchEffect, nextTick } from 'vue'
 import { ElMessage } from 'element-plus'
 import { Plus } from '@element-plus/icons-vue'
 import { createTask } from '@/api/task'
@@ -389,11 +389,39 @@ export default {
 
     // 当tasks属性变化时，更新流程图
     watchEffect(() => {
-      if (props.tasks && props.tasks.length > 0) {
-        // 有任务数据时，使用动态生成的节点和边
-        const nodes = generateNodes()
-        const edges = generateEdges()
-        elements.value = [...nodes, ...edges]
+      // 显式依赖 props.tasks 和每个task的 dependencyTaskIds 以确保变化时触发更新
+      if (props.tasks) {
+        // 强制监听每个任务的dependencyTaskIds
+        const dependencyCount = props.tasks.reduce((count, task) => {
+          return count + (task.dependencyTaskIds?.length || 0)
+        }, 0)
+        
+        // 输出调试信息
+        console.log(`任务总数: ${props.tasks.length}, 依赖关系总数: ${dependencyCount}`)
+        
+        if (props.tasks.length > 0) {
+          // 先清空现有元素，确保重新生成
+          elements.value = []
+          
+          // 有任务数据时，使用动态生成的节点和边
+          const nodes = generateNodes()
+          const edges = generateEdges()
+          
+          // 使用nextTick确保DOM更新
+          nextTick(() => {
+            elements.value = [...nodes, ...edges]
+            
+            // 再次使用nextTick确保元素已渲染后再调整视图
+            nextTick(() => {
+              try {
+                const { fitView } = useVueFlow()
+                fitView({ padding: 0.2, includeHiddenNodes: false })
+              } catch (err) {
+                console.error('调整视图失败:', err)
+              }
+            })
+          })
+        }
       } else if (props.projectId) {
         // 有项目ID但没有任务数据时，清空示例数据
         elements.value = []

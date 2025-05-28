@@ -71,6 +71,9 @@ const selectedDependency = ref('')
 const updating = ref(false)
 const canUpdateDependencies = ref(false)
 
+// 定义emit以便通知父组件任务已更新
+const emit = defineEmits(['task-updated'])
+
 // 计算是否有依赖项
 const hasDependencies = computed(() => {
   return dependentNodes.value && dependentNodes.value.length > 0
@@ -94,15 +97,28 @@ const availableTasks = computed(() => {
 
 // 获取前驱任务的详细信息
 const fetchDependentTasksInfo = async () => {
-  if (!props.task || !props.task.dependencyTaskIds || !props.task.dependencyTaskIds.length) {
+  if (!props.task) {
+    dependentNodes.value = []
+    return
+  }
+  
+  console.log(`获取任务 ${props.task.id} 的前驱节点信息`)
+  
+  // 如果没有依赖任务ID或为空数组，则清空依赖节点
+  if (!props.task.dependencyTaskIds || !props.task.dependencyTaskIds.length) {
+    console.log('该任务没有前驱节点')
     dependentNodes.value = []
     return
   }
   
   try {
+    console.log(`前驱节点IDs: ${props.task.dependencyTaskIds.join(', ')}`)
+    
     const promises = props.task.dependencyTaskIds.map(id => getTaskInfo(id))
     const responses = await Promise.all(promises)
     dependentNodes.value = responses.map(res => res.data)
+    
+    console.log(`获取到 ${dependentNodes.value.length} 个前驱节点信息`)
   } catch (error) {
     console.error('获取前驱任务详情失败:', error)
     ElMessage.error('获取前驱任务详情失败')
@@ -115,6 +131,8 @@ const handleAddDependency = async () => {
   
   updating.value = true
   try {
+    console.log(`添加前驱节点: ${selectedDependency.value} 到任务 ${props.task.id}`)
+    
     // 准备更新的数据
     const taskData = {
       id: props.task.id,
@@ -128,8 +146,19 @@ const handleAddDependency = async () => {
     ElMessage.success('前驱节点添加成功')
     selectedDependency.value = ''
     
-    // 触发父组件刷新任务列表
+    // 立即刷新前驱任务数据
+    await fetchDependentTasksInfo()
+    
+    // 触发父组件刷新任务列表和流程图
     emit('task-updated')
+    
+    // 延迟多次刷新，确保数据完全更新
+    for (let i = 1; i <= 3; i++) {
+      setTimeout(() => {
+        console.log(`第${i}次延迟刷新`)
+        emit('task-updated')
+      }, i * 500)
+    }
   } catch (error) {
     ElMessage.error('添加前驱节点失败')
     console.error('添加前驱节点失败:', error)
@@ -144,6 +173,8 @@ const handleRemoveDependency = async (dependency) => {
   
   updating.value = true
   try {
+    console.log(`从任务 ${props.task.id} 移除前驱节点: ${dependency.id}`)
+    
     // 准备更新的数据
     const taskData = {
       id: props.task.id,
@@ -156,8 +187,19 @@ const handleRemoveDependency = async (dependency) => {
     // 更新本地状态
     ElMessage.success('前驱节点移除成功')
     
-    // 触发父组件刷新任务列表
+    // 立即刷新前驱任务数据
+    await fetchDependentTasksInfo()
+    
+    // 触发父组件刷新任务列表和流程图
     emit('task-updated')
+    
+    // 延迟多次刷新，确保数据完全更新
+    for (let i = 1; i <= 3; i++) {
+      setTimeout(() => {
+        console.log(`第${i}次延迟刷新`)
+        emit('task-updated')
+      }, i * 500)
+    }
   } catch (error) {
     ElMessage.error('移除前驱节点失败')
     console.error('移除前驱节点失败:', error)
@@ -182,8 +224,12 @@ watch(() => props.task, (newTask) => {
   }
 }, { immediate: true })
 
-// 定义emit以便通知父组件任务已更新
-const emit = defineEmits(['task-updated'])
+// 当allTasks更新时，也更新依赖节点信息
+watch(() => props.allTasks, () => {
+  if (props.task) {
+    fetchDependentTasksInfo()
+  }
+}, { deep: true })
 </script>
 
 <style scoped>
