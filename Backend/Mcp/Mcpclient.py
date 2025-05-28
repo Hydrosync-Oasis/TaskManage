@@ -14,7 +14,7 @@ from langchain_core.messages.ai import AIMessage
 sys.stdout.reconfigure(encoding='utf-8')
 
 def extract_user_id(token: str) -> int:
-    with open("appsettings.json", "r") as f:
+    with open(r"Backend\TaskManage\TaskManage\appsettings.json", "r") as f:
         config = json.load(f)
     jwt_config = config["Jwt"]
     key = jwt_config["Key"]
@@ -27,7 +27,7 @@ def extract_user_id(token: str) -> int:
 class MCPClient:
     def __init__(self, token: str, user_id: int, exit_stack: Optional[AsyncExitStack] = None):
         self.token = token
-        self.user_id = extract_user_id(token)
+        self.user_id = user_id
         self.session: Optional[ClientSession] = None
         self.exit_stack = exit_stack if exit_stack else AsyncExitStack()
         self.llm = ChatOpenAI(
@@ -64,7 +64,8 @@ class MCPClient:
     async def cleanup(self):
         await self.exit_stack.aclose()
 async def main(query: str, token: str):
-        client = MCPClient(token)
+        user_id = extract_user_id(token)
+        client = MCPClient(token, user_id)
         await client.connect_to_server(
             "TaskManage\\Backend\\Mcp\\Mcpsever.py"
         )
