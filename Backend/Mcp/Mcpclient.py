@@ -31,7 +31,7 @@ class MCPClient:
         self.session: Optional[ClientSession] = None
         self.exit_stack = exit_stack if exit_stack else AsyncExitStack()
         self.llm = ChatOpenAI(
-            api_key="**************",
+            api_key="*******",
             base_url="https://dashscope.aliyuncs.com/compatible-mode/v1",
             model="qwen-max"
         )
