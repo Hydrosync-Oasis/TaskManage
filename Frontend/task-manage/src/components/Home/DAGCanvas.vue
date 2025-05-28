@@ -11,7 +11,7 @@
         添加任务
       </el-button>
     </div>
-    <VueFlow v-model="elements" class="vue-flow-wrapper" @nodeClick="onNodeClick">
+    <VueFlow v-model="elements" class="vue-flow-wrapper">
       <Background pattern-color="#aaa" gap="8" />
       <Controls />
       <MiniMap />
@@ -86,7 +86,7 @@
 </template>
 
 <script>
-import { VueFlow, Background, Controls, MiniMap } from '@vue-flow/core'
+import { VueFlow, Background, Controls, MiniMap, useVueFlow } from '@vue-flow/core'
 import '@vue-flow/core/dist/style.css'
 import '@vue-flow/core/dist/theme-default.css'
 import '@vue-flow/controls/dist/style.css'
@@ -215,7 +215,7 @@ export default {
             const taskData = {
               title: newTask.value.title,
               description: newTask.value.description,
-              deadline: newTask.value.deadline,
+              deadline: new Date(newTask.value.deadline.replace(" ", "T")).toISOString(),
               priority: newTask.value.priority,
               projectId: props.projectId,
               dependencyTaskIds: newTask.value.dependentTaskIds,
@@ -294,20 +294,17 @@ export default {
     })
 
     // 处理节点点击事件
-    const onNodeClick = (event, node) => {
-      // 如果是示例节点，不触发事件
-      if (['1', '2', '3'].includes(node.id)) {
-        ElMessage.info('这是示例节点，请添加真实任务或选择已有项目');
-        return;
-      }
-      
+    const { onNodeClick } = useVueFlow(); 
+
+    onNodeClick(({ node }) => {
       // 找到对应的任务数据
       const taskData = props.tasks.find(task => String(task.id) === node.id)
+      
       if (taskData) {
         // 向父组件发送点击事件，传递选中的任务数据
         emit('node-click', taskData)
       }
-    }
+    });
 
     return {
       elements,
