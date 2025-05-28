@@ -518,7 +518,6 @@ export default {
           style = { 
             ...style, 
             boxShadow: '0 0 0 3px #409eff, 0 4px 12px rgba(0, 0, 0, 0.15)',
-            transform: 'translateY(-2px)',
             zIndex: 1000
           }
           className += ' selected-node'
@@ -624,10 +623,15 @@ export default {
         // 设置选中的节点ID
         selectedNodeId.value = node.id
         
-        // 重新生成节点以应用高亮样式
-        const nodes = generateNodes()
-        const edges = generateEdges()
-        elements.value = [...nodes, ...edges]
+        // 只更新样式，不重新生成节点
+        const currentNode = elements.value.find(el => el.id === node.id)
+        if (currentNode) {
+          currentNode.style = {
+            ...currentNode.style,
+            boxShadow: '0 0 0 3px #409eff, 0 4px 12px rgba(0, 0, 0, 0.15)'
+          }
+          currentNode.className = (currentNode.className || '') + ' selected-node'
+        }
         
         // 向父组件发送点击事件，传递选中的任务数据
         emit('node-click', taskData)
@@ -808,7 +812,6 @@ export default {
 
 :deep(.selected-node) {
   box-shadow: 0 0 0 3px #409eff, 0 4px 12px rgba(0, 0, 0, 0.15) !important;
-  transform: translateY(-2px) !important;
   z-index: 1000 !important;
 }
 
