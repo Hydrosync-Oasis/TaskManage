@@ -64,7 +64,8 @@ class MCPClient:
     async def cleanup(self):
         await self.exit_stack.aclose()
 async def main(query: str, token: str):
-        client = MCPClient(token)
+        user_id = extract_user_id(token)
+        client = MCPClient(token, user_id)
         await client.connect_to_server(
             "TaskManage\\Backend\\Mcp\\Mcpsever.py"
         )
