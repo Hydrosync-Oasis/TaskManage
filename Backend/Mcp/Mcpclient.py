@@ -27,7 +27,7 @@ def extract_user_id(token: str) -> int:
 class MCPClient:
     def __init__(self, token: str, user_id: int, exit_stack: Optional[AsyncExitStack] = None):
         self.token = token
-        self.user_id = extract_user_id(token)
+        self.user_id = user_id
         self.session: Optional[ClientSession] = None
         self.exit_stack = exit_stack if exit_stack else AsyncExitStack()
         self.llm = ChatOpenAI(
