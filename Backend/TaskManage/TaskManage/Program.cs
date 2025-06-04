@@ -38,8 +38,10 @@ namespace TaskManage {
                     connectionString!));
 
 
+            // DTO
             TaskMapping.Register(TypeAdapterConfig.GlobalSettings);
             ProjectMapping.Register(TypeAdapterConfig.GlobalSettings);
+            CommentMapping.Register(TypeAdapterConfig.GlobalSettings);
 
             // 自己封装的依赖注入方法
             builder.Services.AddInfrastructureServices()
@@ -63,7 +65,6 @@ namespace TaskManage {
                         )
                     };
                 });
-                // ✅ 新增的授权策略注册
             builder.Services.AddAuthorization(options =>
             {
                 options.AddPolicy("AdminOnly", policy => policy.RequireRole("Admin"));

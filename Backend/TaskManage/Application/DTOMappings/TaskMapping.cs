@@ -1,4 +1,4 @@
-﻿using Application.DTOs;
+﻿using Application.Dtos;
 using Domain.Entities;
 using Mapster;
 

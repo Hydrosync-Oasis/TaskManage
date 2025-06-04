@@ -5,8 +5,12 @@ using TaskStatus = Domain.Entities.TaskStatus;
 
 namespace Infrastructure.Repository {
     public class TaskRepository(TaskManageDbContext dbContext) : ITaskRepository {
-        public Task<TaskNode?> GetNodeById(int id) {
+        public Task<TaskNode?> GetTaskById(int id) {
             return dbContext.TaskNodes.FirstOrDefaultAsync(x => x.Id == id);
+        }
+
+        public Task<bool> IsTaskExists(int taskId) {
+            return dbContext.TaskNodes.AnyAsync(x => x.Id == taskId);
         }
 
         public async Task<int> AddAsync(TaskNode task) {

@@ -1,5 +1,4 @@
-﻿using System.Security.Cryptography.X509Certificates;
-using Domain.Entities;
+﻿using Domain.Entities;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
@@ -17,7 +16,7 @@ public class TaskNodeConfiguration : IEntityTypeConfiguration<TaskNode>
             //.IsRequired(false)
             .OnDelete(DeleteBehavior.Restrict);
         builder.HasOne(x => x.Project).WithMany(y => y.Tasks);
-        builder.HasMany(x => x.DependentNodes).WithMany();
+        builder.HasMany(x => x.DependentNodes).WithMany(x=>x.SuccessorNodes);
         builder.HasOne(x => x.CreatedBy)
             .WithMany((x) => x.OwnTaskNodes)
             .HasForeignKey(x => x.CreateUserId)

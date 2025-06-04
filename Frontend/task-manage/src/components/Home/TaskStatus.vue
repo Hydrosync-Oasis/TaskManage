@@ -27,7 +27,7 @@
 </template>
 
 <script setup>
-import { ref, computed, watch } from 'vue'
+import { ref, computed, watch, defineEmits } from 'vue'
 import { ElMessage } from 'element-plus'
 import { updateTask } from '@/api/task'
 import { getUserIdFromToken, getUserRoleFromToken } from '@/utils/jwtUtils'
@@ -71,6 +71,8 @@ const getStatusType = (status) => {
   }
 }
 
+const emit = defineEmits(['task-updated'])
+
 // 处理状态变更
 const handleStatusChange = async () => {
   if (!props.task || selectedStatus.value === null) return
@@ -80,6 +82,7 @@ const handleStatusChange = async () => {
       id: props.task.id,
       status: selectedStatus.value
     })
+    emit('task-updated')
     ElMessage.success('任务状态更新成功')
   } catch (error) {
     ElMessage.error('更新任务状态失败')

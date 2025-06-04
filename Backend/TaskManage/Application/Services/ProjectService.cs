@@ -1,11 +1,8 @@
-﻿using System.Security.Cryptography.X509Certificates;
-using Application.DTOs;
+﻿using Application.Dtos;
 using Application.Interfaces;
 using Domain.Entities;
 using Domain.Repository;
-using Infrastructure;
 using Mapster;
-using Microsoft.EntityFrameworkCore;
 
 namespace Application.Services
 {
@@ -76,11 +73,11 @@ namespace Application.Services
 
             foreach (var tasks in allTasks) {
                 idMap[tasks.Id!.Value] = tasks;
+                indegreeDictionary.TryAdd(tasks, 0);
             }
 
             foreach (var task in allTasks) {
-                indegreeDictionary.TryAdd(task, 0);
-                task.DependencyTaskIds.ForEach((x) => indegreeDictionary[idMap[x]]++);
+                task.DependencyTaskIds!.ForEach((x) => indegreeDictionary[idMap[x]]++);
             }
 
             foreach (var task in indegreeDictionary) {

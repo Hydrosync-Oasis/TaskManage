@@ -2,7 +2,6 @@
 using Application.Services;
 using Domain.Repository;
 using Infrastructure.Auth;
-using Infrastructure.EntityConfiguration;
 using Infrastructure.Repository;
 using Microsoft.Extensions.DependencyInjection;
 

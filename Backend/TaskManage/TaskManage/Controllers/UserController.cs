@@ -1,8 +1,6 @@
-﻿using Application.DTOs;
+﻿using Application.Dtos;
 using Application.Interfaces;
-using Application.Services;
 using Infrastructure.Auth;
-using Infrastructure.Repository;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
@@ -51,7 +49,7 @@ namespace TaskManage.Controllers
 
         [HttpGet("User/{uid:int}")]
         public async Task<IActionResult> QueryUser(int uid) {
-            var userDto = await userService.GetUserInfo(uid);
+            var userDto = await userService.GetUserById(uid);
             if (userDto is null) {
                 return NotFound(new {
                     Error = $"找不到uid={uid}的用户"

@@ -1,6 +1,5 @@
-﻿using Application.DTOs;
+﻿using Application.Dtos;
 using Application.Interfaces;
-using BCrypt.Net;
 using Domain.Entities;
 using Domain.Repository;
 using Infrastructure.Auth;
@@ -51,10 +50,10 @@ namespace Application.Services {
             };
         }
 
-        public async Task<UserDto?> GetUserInfo(int id) {
+        public async Task<UserDto> GetUserById(int id) {
             var u = await userRepository.GetUserByIdAsync(id);
             if (u is null) {
-                return null;
+                throw new KeyNotFoundException("id所指向的用户不存在");
             }
             return new UserDto() {
                 Username = u.UserName,
@@ -64,13 +63,11 @@ namespace Application.Services {
             };
         }
 
-        public async Task<User> GetUserById(int id)
-        {
-            var user = await userRepository.GetUserByIdAsync(id);
-            if (user == null)
-                throw new KeyNotFoundException($"未找到ID为 {id} 的用户");
-            return user;
+        public async Task<bool> IsUserExists(int id) {
+            var u = await userRepository.GetUserByIdAsync(id);
+            return u is not null;
         }
+
         public async Task<UserDto> CreateUserAsync(UserDto userDto)
         {
             var existing = await userRepository.GetUserByUsernameAsync(userDto.Username);

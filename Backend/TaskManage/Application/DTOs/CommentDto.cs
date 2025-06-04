@@ -1,6 +1,5 @@
 namespace Application.Dtos
 {
-    // 用于评论的统一数据传输对象
     public class CommentDto
     {
         public int CommentId { get; set; }              // 评论 ID，用于展示或删除

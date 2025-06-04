@@ -1,8 +1,11 @@
-﻿using Application.DTOs;
+﻿using Application.Dtos;
 using Application.Interfaces;
 using Domain.Entities;
+using Domain.Exceptions.Domain;
+using Domain.Exceptions.Dto;
 using Domain.Repository;
 using Mapster;
+using TaskStatus = Domain.Entities.TaskStatus;
 
 namespace Application.Services
 {
@@ -14,13 +17,25 @@ namespace Application.Services
         public async Task UpdateTask(TaskDto dto)
         {
             if (dto.Id == null) throw new ArgumentNullException(nameof(dto.Id));
-            var task = await taskRepository.GetNodeById(dto.Id.Value);
+            var task = await taskRepository.GetTaskById(dto.Id.Value);
             if (task == null) throw new ArgumentNullException(nameof(task));
 
             if (dto.Title != null) task.Title = dto.Title;
             if (dto.Description != null) task.Description = dto.Description;
-            if (dto.Status != null) task.TaskStatus = dto.Status;
-            if (dto.Deadline != null) task.Deadline = dto.Deadline.Value;
+            if (dto.Status != null) {
+                if (!CheckStatusValid(task, dto.Status.Value)) {
+                    throw new TaskDependencyException("当依赖节点未完成时，无法设置当前任务状态为非Ready，或当前任务未完成时，必须设置后继节点均为Ready。");
+                };
+                task.TaskStatus = dto.Status;
+            }
+
+            if (dto.Deadline != null) {
+                if (!IsDateValid(task, dto.Deadline.Value)) {
+                    throw new TaskDependencyException("任务截止时间只能比依赖任务的截止时间晚，且比后继节点早。");
+                }
+                task.Deadline = dto.Deadline.Value;
+            }
+
             if (dto.Priority != null) task.Priority = dto.Priority.Value;
 
             if (dto.AssignedUid != null)
@@ -36,13 +51,29 @@ namespace Application.Services
 
                 if (HasCircle(task, newDependencyTasks))
                 {
-                    throw new Exception("出现了环形依赖");
+                    throw new TaskCyclicDependencyException();
                 }
 
                 task.DependentNodes = newDependencyTasks;
             }
 
             await taskRepository.UpdateAsync(task);
+        }
+
+        private static bool IsDateValid(TaskNode modifiedNode, DateTimeOffset time) {
+            var dep = modifiedNode.DependentNodes;
+            var suc = modifiedNode.SuccessorNodes;
+            var depRes = dep.All(taskNode => taskNode.Deadline <= time);
+            var sucRes = suc.All(taskNode => taskNode.Deadline >= time);
+            return depRes && sucRes;
+        }
+
+        private static bool CheckStatusValid(TaskNode modifiedNode, TaskStatus status) {
+            var dep = modifiedNode.DependentNodes;
+            var suc = modifiedNode.SuccessorNodes;
+            return status == TaskStatus.Ready 
+                ? suc.All(x => x.TaskStatus == TaskStatus.Ready) 
+                : dep.All(x => x.TaskStatus == TaskStatus.Done);
         }
 
         private static bool HasCircle(TaskNode modifiedNode, List<TaskNode> modifiedDependencyNodes)
@@ -84,10 +115,10 @@ namespace Application.Services
         /// <exception cref="ArgumentNullException">若DTO</exception>
         public async Task<int> AddTask(TaskDto dto, int uid)
         {
-            if (dto.ProjectId == null) throw new ArgumentNullException(nameof(dto.ProjectId));
-            if (dto.Priority == null) throw new ArgumentNullException(nameof(dto.Priority));
-            if (dto.Deadline == null) throw new ArgumentNullException(nameof(dto.Deadline));
-            if (dto.Title == null) throw new ArgumentNullException(nameof(dto.Title));
+            if (dto.ProjectId == null) throw new DtoFieldNullException(nameof(dto), nameof(dto.ProjectId));
+            if (dto.Priority == null) throw new DtoFieldNullException(nameof(dto), nameof(dto.Priority));
+            if (dto.Deadline == null) throw new DtoFieldNullException(nameof(dto), nameof(dto.Deadline));
+            if (dto.Title == null) throw new DtoFieldNullException(nameof(dto), nameof(dto.Title));
 
             dto.DependencyTaskIds ??= [];
 
@@ -114,31 +145,49 @@ namespace Application.Services
 
         public async Task<TaskDto> GetTaskInfo(int taskId)
         {
-            var taskNode = await taskRepository.GetNodeById(taskId);
+            var taskNode = await taskRepository.GetTaskById(taskId);
             if (taskNode is null) {
                 throw new KeyNotFoundException($"没有{taskId}对应的任务");
             }
             return taskNode.Adapt<TaskDto>();
         }
 
-        public async Task<TaskNode> GetTaskNodeByIdAsync(int id)
-        {
-            var node = await taskRepository.GetNodeById(id);
+        public async Task<bool> IsTaskExists(int taskId) {
+            return await taskRepository.IsTaskExists(taskId);
+        }
+
+        private async Task<TaskNode> GetTaskNodeByIdAsync(int taskId) {
+            var node = await taskRepository.GetTaskById(taskId);
             if (node == null)
-                throw new KeyNotFoundException($"TaskNode with id={id} not found.");
+                throw new KeyNotFoundException($"没有{taskId}对应的任务");
             return node;
         }
 
-
-        // 评论相关实现
-        public Task AddCommentAsync(Comment comment)
+        public async Task AddCommentAsync(CommentDto commentDto)
         {
-            return commentRepository.AddAsync(comment);
+            var user = await userRepository.GetUserByIdAsync(commentDto.UserId);
+            var task = await taskRepository.GetTaskById(commentDto.TaskId);
+            if (user is null) {
+                throw new DtoFieldOutOfRangeException(nameof(commentDto), nameof(commentDto.UserId));
+            }
+            if (task is null) {
+                throw new DtoFieldOutOfRangeException(nameof(commentDto), nameof(commentDto.TaskId));
+            }
+
+            var comment = new Comment() {
+                Content = commentDto.Content,
+                CreatedTime = commentDto.CreatedTime,
+                Id = commentDto.TaskId,
+                Owner = user,
+                Task = task
+            };
+            await commentRepository.AddAsync(comment);
         }
 
-        public async Task<Comment?> GetCommentByIdAsync(int id)
+        public async Task<CommentDto?> GetCommentByIdAsync(int id)
         {
-            return await commentRepository.GetCommentByIdAsync(id);
+            return (await commentRepository.GetCommentByIdAsync(id)
+                )?.Adapt<CommentDto>();
         }
 
         public Task DeleteCommentAsync(int id)
@@ -147,9 +196,10 @@ namespace Application.Services
         }
 
         //通过任务ID获取所有评论
-        public async Task<List<Comment>> GetAllCommentsByTaskIdAsync(int taskId)
+        public async Task<List<CommentDto>> GetAllCommentsByTaskIdAsync(int taskId)
         {
-            return await commentRepository.GetAllCommentsByTaskIdAsync(taskId);
+            return (await commentRepository.GetAllCommentsByTaskIdAsync(taskId))
+                .Adapt<List<CommentDto>>();
         }
 
     }

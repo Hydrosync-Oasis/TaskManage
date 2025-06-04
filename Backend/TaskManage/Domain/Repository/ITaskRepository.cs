@@ -3,7 +3,9 @@ using TaskStatus = Domain.Entities.TaskStatus;
 
 namespace Domain.Repository {
     public interface ITaskRepository {
-        public Task<TaskNode?> GetNodeById(int id);
+        public Task<TaskNode?> GetTaskById(int id);
+        public Task<bool> IsTaskExists(int taskId);
+
         Task<int> AddAsync(TaskNode task);
         Task UpdateAsync(TaskNode task);
         Task DeleteAsync(int id);

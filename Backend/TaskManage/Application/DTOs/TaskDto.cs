@@ -1,12 +1,6 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using Domain.Entities;
-using TaskStatus = Domain.Entities.TaskStatus;
+﻿using TaskStatus = Domain.Entities.TaskStatus;
 
-namespace Application.DTOs {
+namespace Application.Dtos {
     public class TaskDto {
         public int? Id { get; set; }
 
@@ -25,5 +19,6 @@ namespace Application.DTOs {
         public int? CreateUserId { get; set; }
 
         public List<int>? DependencyTaskIds { get; set; }
+        public List<int>? SuccessorTaskIds { get; set; }
     }
 }

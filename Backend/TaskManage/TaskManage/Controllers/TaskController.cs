@@ -1,11 +1,8 @@
 ﻿using System.Security.Claims;
 using Application.Dtos;
-using Application.DTOs;
 using Application.Interfaces;
-using Application.Services;
 using Domain.Entities;
-using Domain.Repository;
-using Infrastructure.Repository;
+using Domain.Exceptions.Dto;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
@@ -53,7 +50,7 @@ namespace TaskManage.Controllers
                 await taskService.UpdateTask(dto);
                 return Ok();
             } catch (Exception e) {
-                return StatusCode(500, new { message = e.Message });
+                return StatusCode(500, new { error = e.Message });
             }
         }
         // 添加评论（登录用户）
@@ -66,50 +63,27 @@ namespace TaskManage.Controllers
                 return Unauthorized(new { error = "用户身份无效" });
 
             // 验证请求体及评论内容
-            if (dto == null || string.IsNullOrWhiteSpace(dto.Content))
+            if (string.IsNullOrWhiteSpace(dto.Content))
                 return BadRequest(new { error = "评论内容不能为空" });
 
-            TaskNode taskNode;
-            try
-            {
-                // 尝试获取任务节点，找不到则捕获异常返回404
-                taskNode = await taskService.GetTaskNodeByIdAsync(dto.TaskId);
-            }
-            catch (KeyNotFoundException)
-            {
-                return NotFound(new { error = "关联的任务不存在" });
+            if (!await taskService.IsTaskExists(dto.TaskId)) {
+                return NotFound(new {
+                    error = $"不存在id为{dto.TaskId}的任务"
+                });
             }
 
             int userId = int.Parse(userIdClaim.Value);
 
-            // 验证用户信息
-            var userDto = await userService.GetUserInfo(userId);
-            if (userDto == null)
-                return Unauthorized(new { error = "用户不存在" });
-
-            User user;
-            try
-            {
-                user = await userService.GetUserById(userId);
-            }
-            catch (KeyNotFoundException)
-            {
+            if (!await userService.IsUserExists(userId)) {
                 return Unauthorized(new { error = "用户不存在" });
             }
 
-            // 创建评论实体
-            var comment = new Comment
-            {
-                Content = dto.Content,
-                Task = taskNode,
-                Owner = user,
-                CreatedTime = DateTimeOffset.UtcNow
-            };
 
-            try
-            {
-                await taskService.AddCommentAsync(comment);
+            try {
+                await taskService.AddCommentAsync(dto);
                 return Ok(new { message = "评论添加成功" });
+            } catch (DtoFieldOutOfRangeException e) {
+                return NotFound(e.Message);
             }
             catch (Exception e)
             {
@@ -158,9 +132,9 @@ namespace TaskManage.Controllers
                 var user = await userService.GetUserById(userId);
 
                 // 判断角色权限
-                bool isSystemAdmin = user.UserRole == UserRole.Admin;
-                bool isProjectAdmin = user.UserRole == UserRole.ProjectAdmin;
-                bool isOwner = comment.Owner.Id == userId;
+                bool isSystemAdmin = user.Role == UserRole.Admin;
+                bool isProjectAdmin = user.Role == UserRole.ProjectAdmin;
+                bool isOwner = comment.UserId == userId;
 
                 if (!isSystemAdmin && !isProjectAdmin && !isOwner)
                     return Forbid();
@@ -183,18 +157,7 @@ namespace TaskManage.Controllers
         {
             try
             {
-                var comments = await taskService.GetAllCommentsByTaskIdAsync(taskId);
-
-                // 映射 Comment 实体到 CommentDto，包含 CreatedTime
-                var commentDtos = comments.Select(c => new CommentDto
-                {
-                    CommentId = c.Id,
-                    TaskId = c.Task.Id,
-                    UserId = c.Owner.Id,
-                    Content = c.Content,
-                    CreatedTime = c.CreatedTime  // 这里加上创建时间
-                }).ToList();
-
+                var commentDtos = await taskService.GetAllCommentsByTaskIdAsync(taskId);
                 return Ok(commentDtos);
             }
             catch (Exception ex)
@@ -226,14 +189,17 @@ namespace TaskManage.Controllers
 
             try
             {
-                var taskNode = await taskService.GetTaskNodeByIdAsync(id);
-                if (taskNode == null)
-                    return NotFound(new { error = $"找不到ID为 {id} 的任务节点" });
+                var exists = await taskService.IsTaskExists(id);
+                if (!exists) {
+                    return NotFound(new {
+                        error = $"id为{id}的任务不存在"
+                    });
+                }
 
                 var user = await userService.GetUserById(userId);
 
-                bool isSystemAdmin = user.UserRole == UserRole.Admin;
-                bool isProjectAdmin = user.UserRole == UserRole.ProjectAdmin;
+                bool isSystemAdmin = user.Role == UserRole.Admin;
+                bool isProjectAdmin = user.Role == UserRole.ProjectAdmin;
 
                 if (!isSystemAdmin && !isProjectAdmin)
                     return Forbid();

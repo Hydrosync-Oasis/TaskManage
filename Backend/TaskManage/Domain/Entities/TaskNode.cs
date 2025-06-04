@@ -1,6 +1,4 @@
-﻿using Pomelo.EntityFrameworkCore.MySql.Storage.Internal;
-
-namespace Domain.Entities
+﻿namespace Domain.Entities
 {
     public class TaskNode
     {
@@ -17,6 +15,7 @@ namespace Domain.Entities
         public required int CreateUserId { get; set; }
 
         public List<TaskNode> DependentNodes { get; set; } = [];
+        public List<TaskNode> SuccessorNodes { get; set; } = [];
         public List<Comment> Comments { get; set; } = [];
 
         public int Priority { get; set; }

@@ -1,11 +1,6 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using Domain.Entities;
+﻿using Domain.Entities;
 
-namespace Application.DTOs
+namespace Application.Dtos
 {
         // 注册请求 DTO
     public class RegisterDto
