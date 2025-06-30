@@ -37,8 +37,6 @@
 <script setup>
 
 import { reactive, ref } from 'vue';
-
-// eslint-disable-next-line no-undef
 const emit = defineEmits(['login']);
 const form = reactive({
     username: '',

@@ -40,5 +40,10 @@ namespace Infrastructure.Repository
             await dbContext.SaveChangesAsync();
             return project;
         }
+
+        public async Task<bool> IsProjectExists(int projectId) {
+            return await dbContext.Projects.AnyAsync(x => x.Id == projectId);
+        }
+
     }
 }

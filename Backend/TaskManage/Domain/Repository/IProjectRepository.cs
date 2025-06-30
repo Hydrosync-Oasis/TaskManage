@@ -9,5 +9,7 @@ namespace Domain.Repository {
         public Task UpdateProjectInfoAsync(Project project);
 
         public Task DeleteProjectAsync(int id);
+
+        public Task<bool> IsProjectExists(int projectId);
     }
 }

@@ -62,8 +62,12 @@ namespace Application.Services
 
         public async Task<List<List<TaskDto>>> GetTopologicalOrder(int projectId) {
             var allTasks = await GetTasksByProjectIdAsync(projectId);
-            if (allTasks is null) {
-                throw new ArgumentOutOfRangeException(nameof(projectId), "不存在该id");
+            if (allTasks.Count == 0) {
+                if (!await projectRepository.IsProjectExists(projectId)) {
+                    throw new ArgumentOutOfRangeException(nameof(projectId), "不存在该id");
+                }
+
+                return [[]];
             }
 
             Dictionary<int, TaskDto> idMap = [];
